@@ -2,7 +2,7 @@
 #include <sys/socket.h> /* for recv() and send() */
 #include <unistd.h>     /* for close() */
 
-#define RCVBUFSIZE 32   /* Size of receive buffer */
+#define RCVBUFSIZE 16384   /* Size of receive buffer */
 
 void DieWithError(char *errorMessage);  /* Error handling function */
 
