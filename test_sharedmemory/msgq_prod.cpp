@@ -61,7 +61,7 @@ int main()
 void producerHandler (int sig)
 {
        // remove message queue
-   std::cout << "Producer removing message queue\n";
+   std::cout << "Producer exiting message queue\n";
 //    if (msgctl(msgqid, IPC_RMID, 0) == -1) {
 //       std::cerr << "msgctl(IPC_RMID) failed\n";
 //       exit(EXIT_FAILURE);

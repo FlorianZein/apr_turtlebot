@@ -1,0 +1,9 @@
+sensor daten: welche brauchen wir?
+odom: pose (position, orientation), vl twist
+
+laserscan: angle_min, angle_max, angle_increment, time_increment, scan_time, range_min, range_max, ranges, (intensities)
+
+compilerflag bei json -ljsoncpp
+
+
+makefile
