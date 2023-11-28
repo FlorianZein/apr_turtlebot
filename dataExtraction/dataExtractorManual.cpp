@@ -8,6 +8,7 @@ std::vector<long double> ranges;
 std::string rang="ranges";
 std::string delimiter = ",";
 std::string tmp;
+int counter;
 int pos_range_begin, pos_range_end;
 
 
@@ -24,8 +25,10 @@ int main()
     {
         tmp = newData.substr(1, newData.find(delimiter) - 1);
         // std::cout << std::stold(tmp) << std::endl;
-        // std::cout << tmp << std::endl;
+        // std::cout << tmp << " ";
         ranges.push_back(std::stold(tmp));
+        // std::cout << ranges[357] << std::endl;
+        counter++;
         if(tmp.find("]") < 20)
         {
             tmp = tmp.substr(0, tmp.find("]"));
@@ -36,10 +39,16 @@ int main()
         newData.erase(0, newData.find(delimiter) + 1);
         // std::cout << newData << std::endl;
     }
+    // std::cout << std::endl << std::endl;
 
-    for(auto i = ranges.begin(); i < ranges.end(); i++)
+    for(float i : ranges)
     {
-        std::cout << ranges[*i] <<  " " ;
+        std::cout << i <<  " " ;
         // << std::endl;
     }
+
+    std::cout << std::endl;
+    std::cout << counter << std::endl;
+
+    return 0;
 }
