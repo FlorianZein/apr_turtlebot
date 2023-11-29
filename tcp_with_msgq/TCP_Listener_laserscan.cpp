@@ -14,12 +14,14 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #define RCVBUFSIZE 512   /* Size of receive buffer */
 
 key_t KEY_LASER = 820;
 void producerHandler (int sig);
 int msgqid_laser; 
+float rangesArray[360];
 enum MessageType { PROD_MSG=1, CONS_MSG };
 struct Message_Laser
 {
@@ -130,6 +132,9 @@ int main(int argc, char *argv[])
 
     close(sock);
 
+    std::string laserData = std::string(echoBuffer);
+    dataExtraction(laserData);
+
     usleep(10);
     Message_Laser laserMessage;
     laserMessage.type = PROD_MSG;
@@ -147,4 +152,52 @@ int main(int argc, char *argv[])
 
 
     exit(0);
+}
+
+void dataExtraction(std::string dataString)
+{
+    std::vector<long double> ranges;
+    std::string delimiter = ",";
+    std::string tmp;
+    int counter;
+    int pos_range_begin, pos_range_end;
+
+    pos_range_begin = dataString.find_first_of("[");
+    pos_range_end = dataString.find_first_of("]");
+    std::string newData = dataString.substr(pos_range_begin,pos_range_end);
+    // std::cout << pos_range_begin << std::endl;
+    // std::cout << pos_range_end << std::endl;
+    // std::cout << newData << std::endl;
+
+    for( ; ; )
+    {
+        tmp = newData.substr(1, newData.find(delimiter) - 1);
+        // std::cout << std::stold(tmp) << std::endl;
+        // std::cout << tmp << " ";
+        ranges.push_back(std::stold(tmp));
+        // std::cout << ranges[357] << std::endl;
+        counter++;
+        if(tmp.find("]") < 20)
+        {
+            tmp = tmp.substr(0, tmp.find("]"));
+            // std::cout << tmp << std::endl;
+            ranges.push_back(std::stold(tmp));
+            break;
+        }
+        newData.erase(0, newData.find(delimiter) + 1);
+        // std::cout << newData << std::endl;
+    }
+    // std::cout << std::endl << std::endl;
+
+    for(float i : ranges)
+    {
+        std::cout << i <<  " " ;
+        // << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << counter << std::endl;
+
+
+
 }
