@@ -49,6 +49,8 @@ int main()
 
     std::cout << std::endl;
     std::cout << counter << std::endl;
+    std::cout << dataString << std::endl;
 
     return 0;
+
 }
