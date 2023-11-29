@@ -4,14 +4,34 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
+#include <signal.h>
+#include <sys/types.h>
+#include <stdlib.h>  
+#include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #define RCVBUFSIZE 512   /* Size of receive buffer */
 
+key_t KEY_LASER = 820;
+void producerHandler (int sig);
+int msgqid_laser; 
+float rangesArray[360];
+enum MessageType { PROD_MSG=1, CONS_MSG };
+struct Message_Laser
+{
+    long type;
+    float data[360];
+};
+
 void DieWithError(char *errorMessage);  /* Error handling function */
+
+void dataExtraction(std::string dataString);
 
 int main(int argc, char *argv[])
 {
@@ -24,6 +44,18 @@ int main(int argc, char *argv[])
     unsigned int echoStringLen;      /* Length of string to echo */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
+
+
+    // msgqid_laser = msgget(KEY_LASER, 0666 | IPC_CREAT);
+    // if (msgqid_laser == -1) {
+    //   std::cerr << "msgget laser prod failed\n";
+    //   exit(EXIT_FAILURE);
+    // }
+    // signal(SIGINT, producerHandler);
+    // std::cout << "I am the laser prod" << std::endl;
+
+
+
 
     // if ((argc < 3) || (argc > 4))    /* Test for correct number of arguments */
     // {
@@ -42,6 +74,7 @@ int main(int argc, char *argv[])
 
     while(true)
     {
+
 
     /* Create a reliable, stream socket using TCP */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -99,9 +132,29 @@ int main(int argc, char *argv[])
     }
 
     printf("\n");    /* Print a final linefeed */
-    echoBuffer[bytesRcvd-1] = 'X';
 
     close(sock);
+
+    
+    // std::cout << "test" << std::endl;
+
+    // std::cout << laserData << std::endl;
+    // dataExtraction(laserData);
+    // std::cout << "test" << std::endl;
+
+    // usleep(10);
+    // Message_Laser laserMessage;
+    // laserMessage.type = PROD_MSG;
+    // for(int i = 0; i < 360; i++)
+    // {
+    //     laserMessage.data[i] = rangesArray[i];
+    // }
+    // usleep(10);
+
+    // if(msgsnd(msgqid_laser, &echoBuffer, sizeof(int), 0) != 0)
+    // {
+    //     std::cout << "msgq_laser send failed" << std::endl;
+    // };
 
     usleep(10000);
 
@@ -109,4 +162,61 @@ int main(int argc, char *argv[])
 
 
     exit(0);
+}
+
+void dataExtraction(std::string dataString)
+{
+    std::vector<float> ranges;
+    std::string delimiter = ",";
+    std::string tmp;
+    int counter;
+    int pos_range_begin, pos_range_end;
+
+    pos_range_begin = dataString.find_first_of("[");
+    pos_range_end = dataString.find_first_of("]");
+    std::string newData = dataString.substr(pos_range_begin,pos_range_end);
+    // std::cout << pos_range_begin << std::endl;
+    // std::cout << pos_range_end << std::endl;
+    // std::cout << newData << std::endl;
+
+    for( ; ; )
+    {
+        tmp = newData.substr(1, newData.find(delimiter) - 1);
+        // std::cout << std::stold(tmp) << std::endl;
+        // std::cout << tmp << " ";
+        ranges.push_back(std::stof(tmp));
+        // std::cout << ranges[357] << std::endl;
+        counter++;
+        if(tmp.find("]") < 20)
+        {
+            tmp = tmp.substr(0, tmp.find("]"));
+            // std::cout << tmp << std::endl;
+            ranges.push_back(std::stold(tmp));
+            break;
+        }
+        newData.erase(0, newData.find(delimiter) + 1);
+        // std::cout << newData << std::endl;
+    }
+    // std::cout << std::endl << std::endl;
+    
+    int j = 0;
+    for(float i : ranges)
+    {
+        rangesArray[j] = i;
+        ++j;
+        std::cout << i <<  " " ;
+        // << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << counter << std::endl;
+
+
+
+}
+
+
+void producerHandler(int sig)
+{
+    exit(EXIT_SUCCESS);
 }

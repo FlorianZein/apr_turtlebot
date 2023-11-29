@@ -24,7 +24,7 @@ enum MessageType { PROD_MSG=1, CONS_MSG };
 struct Message_Odom
 {
     long type;
-    char* data;
+    float data[7];
 };
 
 void DieWithError(char *errorMessage);  /* Error handling function */
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort = 9998;     /* Echo server port */
-    const char *servIP = "192.168.100.54";      // local ip of desktop                /* Server IP address (dotted quad) */
+    const char *servIP = "192.168.100.50";      // local ip of desktop                /* Server IP address (dotted quad) */
     const char *echoString = "---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217e-05, \"y\": 6.059087172616273e-05, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
     char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
     unsigned int echoStringLen;      /* Length of string to echo */
@@ -90,6 +90,9 @@ int main(int argc, char *argv[])
     /* Receive the same string back from the server */
     totalBytesRcvd = 0;
     printf("Received: ");                /* Setup to print the echoed string */
+
+    std::string odomData;
+
     while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
                 echoBuffer[bytesRcvd-8] == '_'  &&
                 echoBuffer[bytesRcvd-7] == '_'  &&
@@ -119,25 +122,81 @@ int main(int argc, char *argv[])
         //     printf("hello");
         // }
         echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
-        printf("%s", echoBuffer);      /* Print the echo buffer */
+        // printf("%s", echoBuffer);      /* Print the echo buffer */
+        odomData.append(echoBuffer);
     }
 
     printf("\n");    /* Print a final linefeed */
-    echoBuffer[bytesRcvd-1] = 'X';
 
     close(sock);
+    std::cout << odomData << std::endl;
+
+
+
+    float odomArray[7];
+    std::string delimiter = ",";
+    std::string tmp;
+    int counter;
+    int pos_range_begin, pos_range_end;
+
+    // std::cout << "test" << std::endl;
+    // std::cout << dataString << std::endl;
+    pos_range_begin = dataString.find_first_of("[");
+    pos_range_end = dataString.find_first_of("]");
+    std::string newData = dataString.substr(pos_range_begin,pos_range_end);
+    // std::cout << pos_range_begin << std::endl;
+    // std::cout << pos_range_end << std::endl;
+    // std::cout << newData << std::endl;
+    for( ; ; )
+    {
+        tmp = newData.substr(1, newData.find(delimiter) - 1);
+        // std::cout << std::stold(tmp) << std::endl;
+        // std::cout << tmp << " ";
+        ranges.push_back(std::stof(tmp));
+        // std::cout << ranges[357] << std::endl;
+        counter++;
+        if(tmp.find("]") < 20)
+        {
+            tmp = tmp.substr(0, tmp.find("]"));
+            // std::cout << tmp << std::endl;
+            ranges.push_back(std::stold(tmp));
+            break;
+        }
+        newData.erase(0, newData.find(delimiter) + 1);
+        // std::cout << newData << std::endl;
+    }
+    // std::cout << std::endl << std::endl;
+    
+    int j = 0;
+    for(float i : ranges)
+    {
+        rangesArray[j] = i;
+        // std::cout << rangesArray[j] <<  " " ;
+        ++j;
+        // << std::endl;
+    }
+
+
+
+
+    
 
 
     usleep(10);
     Message_Odom odomMessage;
     odomMessage.type = PROD_MSG;
-    odomMessage.data = echoBuffer;
+    // odomMessage.data = echoBuffer;
+    for(int i = 0; i < 7; i++)
+    {
+        odomMessage.data[i] = rand()%5 * 0.1;
+    }
     usleep(10);
 
-    if(msgsnd(msgqid_odom, &odomMessage, sizeof(char), 0) != 0)
+    if(msgsnd(msgqid_odom, &odomMessage, sizeof(float) * 20, 0) != 0)
     {
         std::cout << "msgq_odom send failed" << std::endl;
     };
+    std::cout << "test" << std::endl;
 
     usleep(10000);
 
@@ -145,4 +204,10 @@ int main(int argc, char *argv[])
 
 
     exit(0);
+}
+
+void producerHandler (int sig)
+{
+    exit(EXIT_SUCCESS);
+
 }
