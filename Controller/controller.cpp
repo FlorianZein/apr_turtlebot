@@ -29,6 +29,7 @@ int poses()
     pos_x_max = dataString.find_first_of("y");
     std::string pose_x = dataString.substr(pos_x_min,pos_x_max);
     cout << pose_x<< endl;
+    string pose=pose_x;
     tmp = pose_x.substr(1, pose_x.find(delimiter) - 1);
     cout<< tmp<< endl;
     pose_x=tmp;
@@ -43,14 +44,29 @@ int poses()
     pose_y=tmp;
     cout <<pose_y << endl;
 
-    string orient=dataString.substr(dataString.find_first_of("\"orientation\":")+2, dataString.find_first_of("covariance"));
+    string orient=dataString.substr(dataString.find("orientation")+2, dataString.find("covariance"));
+    cout << dataString.find("orientation")+2<< endl;
     cout<<orient<<endl;
     std::string orient_x = orient.substr(orient.find_first_of("x")+2,orient.find_first_of("y"));
-    int test=orient.find_first_of("x");
+    //int test=orient.find("x");
     tmp = orient_x.substr(1, orient_x.find(delimiter) - 1);
-    cout<< test<< endl;
     orient_x=tmp;
-    cout <<orient_x << endl;
+    cout <<"Orientation x: "<<orient_x << endl;
+
+     std::string orient_y = orient.substr(orient.find_first_of("y")+2,orient.find_first_of("z"));
+    tmp = orient_y.substr(1, orient_y.find(delimiter) - 1);
+    orient_y=tmp;
+    cout <<"Orientation y: "<<orient_y << endl;
+
+     std::string orient_z = orient.substr(orient.find_first_of("z")+2,orient.find_first_of("w"));
+    tmp = orient_z.substr(1, orient_z.find(delimiter) - 1);
+    orient_z=tmp;
+    cout <<"Orientation z: "<<orient_z << endl;
+
+     std::string orient_w = orient.substr(orient.find_first_of("w")+2,orient.find_first_of("}}"));
+    tmp = orient_w.substr(1, orient_w.find(delimiter) - 3);
+    orient_w=tmp;
+    cout <<"Orientation w: "<<orient_w << endl;
 
 
 
@@ -149,7 +165,7 @@ int main()
 {
 
     poses();
-    cout << ranges[0] << endl;
+    //cout << ranges[0] << endl;
 
     pose2d=ranges;
 
@@ -159,7 +175,7 @@ int main()
     goal_y=positions[count][1];
     goal_theta=positions[count][2]*PI/180;
 
-
+/*
    while (true)
     {
 
@@ -252,10 +268,10 @@ int main()
      cmd_msg.linear.z = 0;
      cmd_msg.angular.x = 0;
      cmd_msg.angular.y = 0;
-     cmd_msg.angular.z = wt;*/
+     cmd_msg.angular.z = wt;
 
 
-    }
+    }*/
     
     return 0;
 }
