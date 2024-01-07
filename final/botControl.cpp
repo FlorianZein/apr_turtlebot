@@ -79,21 +79,42 @@ double rho = 0;
 double alpha = 0; 
 double beta = 0;
 
-double pose_x = 4;
-double pose_y = -2;
-
 double vt = 0;
 double wt = 0;
 
 bool drive = true;
 
-// double position_x=0; //to define a delta variable
-// double position_y=0;
-// double position_theta=0;
+Message_Odom odomMsg;
+Message_Laser laserMsg;
+Message_Vel velMsg;
 
 int goalCount = 0;
 
 
+bool goPosesDefined = false;
+
+// für berechnung der poses
+const int numOfScansForDistanceToPole = 5;
+double distanceToPoleMiddle = 0;
+double poleDiameter = 0.1;
+double distanceFromPole = poleDiameter + 0.15;   // normalabstand von der pole
+
+bool driveBool = false;
+
+// variables for laserscan box wall 
+double distanceLeft = 0, distanceRight = 0, laserDistanceMiddle = 0, deltaDistanceWall = 0;
+double k_wall = 0.5;
+bool wallFollowing = false;
+
+
+
+
+// double pose_x = 4;
+// double pose_y = -2;
+
+// double position_x=0; //to define a delta variable
+// double position_y=0;
+// double position_theta=0;
 
 // double r=0.16; //difference between the wheels
 // double p_w=r*10;
@@ -118,26 +139,7 @@ int main()
     if (msgqid_vel == -1) {
       std::cerr << "msgget laser prod failed\n";
       exit(EXIT_FAILURE);
-    }
-
-    Message_Odom odomMsg;
-    Message_Laser laserMsg;
-    Message_Vel velMsg;
-
-    bool goPosesDefined = false;
-
-    // für berechnung der poses
-    const int numOfScansForDistanceToPole = 5;
-    double distanceToPoleMiddle = 0;
-    double poleDiameter = 0.1;
-    double distanceFromPole = poleDiameter + 0.15;   // normalabstand von der pole
-
-    bool driveBool = false;
-
-    // variables for laserscan box 
-    double distanceLeft = 0, distanceRight = 0, laserDistanceMiddle = 0, deltaDistanceWall = 0;
-    double k_wall = 0.5;
-    bool wallFollowing = false;
+    }  
 
 
     
@@ -153,6 +155,7 @@ int main()
         // receiving odom and laser data from msg queue
         msgrcv(msgqid_odom, &odomMsg, sizeof(double) * 6, PROD_MSG, 0);
         msgrcv(msgqid_laser, &laserMsg, sizeof(double) * 360, PROD_MSG, 0);
+
         // for(double i : odomMsg.pose)
         // {
         //     std::cout << i << std::endl;
@@ -163,9 +166,6 @@ int main()
         //     std::cout << i << std::endl;
         // }
 
-
-        // anfangsposition von y
-        // laserDistanceMiddle = (distanceLeft + distanceRight) / 2;
 
         // goPoses definition
         if(goPosesDefined == false)
@@ -188,6 +188,9 @@ int main()
             distanceToPoleMiddle = distanceToPoleMiddle / numOfScansForDistanceToPole;
 
             // gettin wall distance
+            distanceLeft = 0;
+            distanceRight = 0;
+
             for(int i = 268; i < 268 + 5; i++)
             {
                 distanceLeft = distanceLeft + laserMsg.scan[i];
@@ -213,7 +216,7 @@ int main()
             goPoses[7].theta = 180.0 * PI / 180;
 
             goPoses[1].x = goPoses[0].x + distanceToPoleMiddle - distanceFromPole;
-            goPoses[1].y = 0.0;
+            goPoses[1].y = goPoses[0].y;
             goPoses[1].theta = -90.0 * PI / 180;
 
             goPoses[2].x = goPoses[1].x + distanceFromPole;
@@ -235,6 +238,8 @@ int main()
             goPoses[6].x = goPoses[5].x;
             goPoses[6].y = goPoses[5].y;
             goPoses[6].theta = 180.0 * PI / 180;
+
+            currentGoal = goPoses[1];
 
             goPosesDefined = true;
         }
@@ -258,7 +263,7 @@ int main()
 
         deltaDistanceWall = distanceLeft - distanceRight;
 
-        if((laserDistanceMiddle + 0.5) > ((distanceLeft + distanceRight) / 2))
+        if((laserDistanceMiddle + 0.2) > ((distanceLeft + distanceRight) / 2))      // möglich hinzufügen: if right >>> left -> wallfollowing false
         {
             wallFollowing = true;
         }
@@ -276,16 +281,24 @@ int main()
         // double pitch = asin(-2.0*(q.x*q.z - q.w*q.y));
         // double roll = atan2(2.0*(q.x*q.y + q.w*q.z), q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z);
 
+        // double yaw_z = atan2( 2.0 * (w*z + x*y), 1.0 - 2.0 *(y*y + z*z));
+
+        std::cout << odomMsg.pose[2] << " " << odomMsg.pose[3] << " " << odomMsg.pose[4] << " " << odomMsg.pose[5] << "\n-----------------------------" << std::endl;
+
         currentPose.x = odomMsg.pose[0];
-        currentPose.x = odomMsg.pose[1];
-        currentPose.theta = atan2(  (2.0 * (odomMsg.pose[3]*odomMsg.pose[4] + odomMsg.pose[5]*odomMsg.pose[2])), 
-                                    (pow(odomMsg.pose[5], 2) - pow(odomMsg.pose[2], 2) - pow(odomMsg.pose[3], 2) - pow(odomMsg.pose[4], 2))
+        currentPose.y = odomMsg.pose[1];
+        // möglicherweise muss atan2 * -1 gerechnet werden
+        currentPose.theta = atan2(  (2.0 * (odomMsg.pose[5]*odomMsg.pose[4] + odomMsg.pose[2]*odomMsg.pose[3])), 
+                                    (1.0 - 2.0*(pow(odomMsg.pose[3], 2) + pow(odomMsg.pose[4], 2)))
                                     );
 
 
+
+        // TO DO implementieren der driveBool abfrage
+
         // std::cin >> tmp;
         // if tmp == "drive";
-        //     driveBool = true; 
+        driveBool = true; 
 
         if(driveBool == true)
         {
@@ -363,14 +376,25 @@ int main()
                 std::cout << "msgq_vel send failed" << std::endl;
             };
         }
-        
-        
 
+        std::cout << "cpx: " << currentPose.x << std::endl;
+        std::cout << "cpy: " << currentPose.y << std::endl;
+        std::cout << "cptheta: " << currentPose.theta << std::endl; 
+
+        std::cout << "gpx: " << currentGoal.x << std::endl;
+        std::cout << "gpy: " << currentGoal.y << std::endl;
+        std::cout << "gptheta: " << currentGoal.theta << std::endl; 
+
+        std::cout << "dist to middle: " << distanceToPoleMiddle << std::endl;
+        std::cout << "laserdistancemiddle: " << laserDistanceMiddle << std::endl;
+
+        std::cout << "vt: " << velMsg.velocities[0] << std::endl;
+        std::cout << "wt: " << velMsg.velocities[1] << std::endl;
+
+        // usleep(100000);
+        usleep(2000000);
 
     }
-
-
-
 
 
     return 0;
