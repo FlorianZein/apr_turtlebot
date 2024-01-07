@@ -24,11 +24,6 @@ enum MessageType { PROD_MSG=1, CONS_MSG };
 struct Message_Odom
 {
     long type;
-<<<<<<< HEAD
-    char* data;
-};
-
-=======
     double pose[6];
 };
 
@@ -42,7 +37,6 @@ double arPose[6];
 
 void poseExtract();
 
->>>>>>> final dir, makefile, tcp clients to do
 void DieWithError(char *errorMessage);  /* Error handling function */
 
 int main(int argc, char *argv[])
@@ -143,16 +137,6 @@ int main(int argc, char *argv[])
 
     close(sock);
 
-<<<<<<< HEAD
-
-    usleep(10);
-    Message_Odom odomMessage;
-    odomMessage.type = PROD_MSG;
-    odomMessage.data = echoBuffer;
-    usleep(10);
-
-    if(msgsnd(msgqid_odom, &odomMessage, sizeof(char), 0) != 0)
-=======
     usleep(10);
 
 
@@ -169,7 +153,6 @@ int main(int argc, char *argv[])
 
     // sending pose over msgq to main program
     if(msgsnd(msgqid_odom, &odomMessage, sizeof(double) * 6, 0) != 0)
->>>>>>> final dir, makefile, tcp clients to do
     {
         std::cout << "msgq_odom send failed" << std::endl;
     };
@@ -181,8 +164,6 @@ int main(int argc, char *argv[])
 
     exit(0);
 }
-<<<<<<< HEAD
-=======
 
 void producerHandler(int sig)
 {
@@ -249,4 +230,3 @@ void poseExtract()
     arPose[5] = stod(orient_w);
 
 }
->>>>>>> final dir, makefile, tcp clients to do

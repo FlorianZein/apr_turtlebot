@@ -148,11 +148,8 @@ int main(int argc, char *argv[])
 
     exit(0);
 }
-<<<<<<< HEAD
-=======
 
 void producerHandler(int sig)
 {
 
 }
->>>>>>> final dir, makefile, tcp clients to do
