@@ -4,6 +4,9 @@ CPPFLAG = g++ --std=c++17 -Wall -Wextra -pedantic
 # program: msgq_creater.o  tcp_odom.o tcp_laser.o tcp_vel.o
 # 	$(CPPFLAG) $(CPPDEBUG)
 
+# bot_control.o : botControl.cpp
+# 	$(CPPFLAG) botControl -o bot_control
+
 # msgq_creater.o : msgq_creater.cpp
 # 	$(CPPFLAG) msgq_creater.cpp -o msgq_creater
 
@@ -15,6 +18,9 @@ CPPFLAG = g++ --std=c++17 -Wall -Wextra -pedantic
 
 # tcp_vel.o : TCP_Commander_cmd_vel_msgq.cpp DieWithError.cpp
 # 	$(CPPFLAG) TCP_Commander_cmd_vel_msgq.cpp DieWithError.cpp -o tcp_vel
+
+bot_control : botControl.cpp
+	$(CPPFLAG) botControl.cpp -o bot_control.out
 
 msgq_creater : msgq_creater.cpp
 	$(CPPFLAG) msgq_creater.cpp -o msgq_creater.out

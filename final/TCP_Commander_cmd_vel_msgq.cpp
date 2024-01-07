@@ -21,7 +21,7 @@ key_t KEY_VEL = 830;
 void consumerHandler(int sig);
 int msgqid_vel;
 enum MessageType {PROD_MSG=1, CONS_MSG };
-struct Message_vel
+struct Message_Vel
 {
     long type;
     float velocities[2];
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
     while(true)
     {
-        Message_vel velMessage;
+        Message_Vel velMessage;
 
         msgrcv(msgqid_vel, &velMessage, sizeof(float) * 2, PROD_MSG, 0);
         std::cout << "Read: " << velMessage.velocities[0] << " " << velMessage.velocities[1] << std::endl;        

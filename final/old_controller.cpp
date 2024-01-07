@@ -174,7 +174,7 @@ int main()
     goal_y=positions[count][1];
     goal_theta=positions[count][2]*PI/180;
 
-/*
+
    while (true)
     {
 
