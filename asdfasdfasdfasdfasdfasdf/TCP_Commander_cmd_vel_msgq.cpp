@@ -28,7 +28,11 @@ struct Message_vel
 };
 
 
+<<<<<<< HEAD
 void DieWithError(char *errorMessage);  /* Error handling function */
+=======
+void DieWithError(char* errorMessage);  /* Error handling function */
+>>>>>>> final dir, makefile, tcp clients to do
 
 int main(int argc, char *argv[])
 {
@@ -72,7 +76,11 @@ int main(int argc, char *argv[])
     {
         Message_vel velMessage;
 
+<<<<<<< HEAD
         msgrcv(msgqid_vel, &velMessage, sizeof(float), PROD_MSG, 0);
+=======
+        msgrcv(msgqid_vel, &velMessage, sizeof(float) * 2, PROD_MSG, 0);
+>>>>>>> final dir, makefile, tcp clients to do
         std::cout << "Read: " << velMessage.velocities[0] << " " << velMessage.velocities[1] << std::endl;        
         
         std::string str_stringecho = "---START---{\"linear\": " + std::to_string(velMessage.velocities[0]) + ", \"angular\": " + std::to_string(velMessage.velocities[1]) + "}___END___";
@@ -154,3 +162,11 @@ int main(int argc, char *argv[])
 
     exit(0);
 }
+<<<<<<< HEAD
+=======
+
+void consumerHandler(int sig)
+{
+
+}
+>>>>>>> final dir, makefile, tcp clients to do

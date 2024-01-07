@@ -24,9 +24,25 @@ enum MessageType { PROD_MSG=1, CONS_MSG };
 struct Message_Odom
 {
     long type;
+<<<<<<< HEAD
     char* data;
 };
 
+=======
+    double pose[6];
+};
+
+std::string dataString="---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217e-05, \"y\": 6.059087172616273e-05, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
+
+std::string delimiter = ",";
+std::string tmp;
+
+int pos_x_min,pos_x_max, pos_y_min, pos_y_max, pos_range_begin, pos_range_end;
+double arPose[6];
+
+void poseExtract();
+
+>>>>>>> final dir, makefile, tcp clients to do
 void DieWithError(char *errorMessage);  /* Error handling function */
 
 int main(int argc, char *argv[])
@@ -127,6 +143,7 @@ int main(int argc, char *argv[])
 
     close(sock);
 
+<<<<<<< HEAD
 
     usleep(10);
     Message_Odom odomMessage;
@@ -135,6 +152,24 @@ int main(int argc, char *argv[])
     usleep(10);
 
     if(msgsnd(msgqid_odom, &odomMessage, sizeof(char), 0) != 0)
+=======
+    usleep(10);
+
+
+    // extract pose of received message
+    poseExtract();
+
+    Message_Odom odomMessage;
+    odomMessage.type = PROD_MSG;
+    for(int i : arPose)
+    {
+        odomMessage.pose[i] = arPose[i];
+    }
+    usleep(10);
+
+    // sending pose over msgq to main program
+    if(msgsnd(msgqid_odom, &odomMessage, sizeof(double) * 6, 0) != 0)
+>>>>>>> final dir, makefile, tcp clients to do
     {
         std::cout << "msgq_odom send failed" << std::endl;
     };
@@ -146,3 +181,72 @@ int main(int argc, char *argv[])
 
     exit(0);
 }
+<<<<<<< HEAD
+=======
+
+void producerHandler(int sig)
+{
+
+}
+
+
+void poseExtract()
+{
+
+    using namespace std;
+    // pos_range_begin = dataString.find_first_of("[");
+    // pos_range_end = dataString.find_first_of("]");
+    // std::string newData = dataString.substr(pos_range_begin,pos_range_end);
+
+    pos_x_min = dataString.find_first_of("x")+2;
+    pos_x_max = dataString.find_first_of("y");
+    std::string pose_x = dataString.substr(pos_x_min,pos_x_max);
+    cout << pose_x << endl;
+    // string pose=pose_x;
+    tmp = pose_x.substr(1, pose_x.find(delimiter) - 1);
+    cout<< tmp<< endl;
+    pose_x=tmp;
+    cout <<pose_x<<endl;
+
+
+    pos_y_min = dataString.find_first_of("y")+2;
+    pos_y_max = dataString.find_first_of("z");
+    std::string pose_y = dataString.substr(pos_y_min,pos_y_max);
+    tmp = pose_y.substr(1, pose_y.find(delimiter) - 1);
+    cout<< tmp<< endl;
+    pose_y=tmp;
+    cout <<pose_y << endl;
+
+    string orient=dataString.substr(dataString.find("orientation")+2, dataString.find("covariance"));
+    cout << dataString.find("orientation")+2<< endl;
+    cout<<orient<<endl;
+    std::string orient_x = orient.substr(orient.find_first_of("x")+2,orient.find_first_of("y"));
+    //int test=orient.find("x");
+    tmp = orient_x.substr(1, orient_x.find(delimiter) - 1);
+    orient_x=tmp;
+    cout <<"Orientation x: "<<orient_x << endl;
+
+    std::string orient_y = orient.substr(orient.find_first_of("y")+2,orient.find_first_of("z"));
+    tmp = orient_y.substr(1, orient_y.find(delimiter) - 1);
+    orient_y=tmp;
+    cout <<"Orientation y: "<<orient_y << endl;
+
+    std::string orient_z = orient.substr(orient.find_first_of("z")+2,orient.find_first_of("w"));
+    tmp = orient_z.substr(1, orient_z.find(delimiter) - 1);
+    orient_z=tmp;
+    cout <<"Orientation z: "<<orient_z << endl;
+
+    std::string orient_w = orient.substr(orient.find_first_of("w")+2,orient.find_first_of("}}"));
+    tmp = orient_w.substr(1, orient_w.find(delimiter) - 3);
+    orient_w=tmp;
+    cout <<"Orientation w: "<<orient_w << endl;
+
+    arPose[0] = stod(pose_x);
+    arPose[1] = stod(pose_y);
+    arPose[2] = stod(orient_x);
+    arPose[3] = stod(orient_y);
+    arPose[4] = stod(orient_z);
+    arPose[5] = stod(orient_w);
+
+}
+>>>>>>> final dir, makefile, tcp clients to do
