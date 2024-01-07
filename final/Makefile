@@ -1,7 +1,7 @@
 CPPFLAG = g++ --std=c++17 -Wall -Wextra -pedantic
 
 
-# program: msgq_creater.o  tcp_odom.o tcp_laser.o tcp_vel.o
+# program: msgq_creater.o tcp_odom.o tcp_laser.o tcp_vel.o
 # 	$(CPPFLAG) $(CPPDEBUG)
 
 # bot_control.o : botControl.cpp
