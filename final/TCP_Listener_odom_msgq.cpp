@@ -27,8 +27,8 @@ struct Message_Odom
     double pose[6];
 };
 
-std::string dataString="---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217e-05, \"y\": 6.059087172616273e-05, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
-
+// std::string dataString="---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217e-05, \"y\": 6.059087172616273e-05, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
+std::string dataString;
 std::string delimiter = ",";
 std::string tmp;
 
@@ -44,8 +44,9 @@ int main(int argc, char *argv[])
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort = 9998;     /* Echo server port */
-    const char *servIP = "192.168.100.54";      // local ip of desktop                /* Server IP address (dotted quad) */
-    const char *echoString = "---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217e-05, \"y\": 6.059087172616273e-05, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
+    // const char *servIP = "192.168.100.54";      // local ip of desktop                /* Server IP address (dotted quad) */
+    const char *servIP = "172.19.178.59";
+    const char *echoString = "---START---{\"header\": {\"seq\": 67769, \"stamp\": {\"secs\": 1677511096, \"nsecs\": 329690933}, \"frame_id\": \"odom\"}, \"child_frame_id\": \"base_footprint\", \"pose\": {\"pose\": {\"position\": {\"x\": -8.901372348191217, \"y\": 6.059087172616273, \"z\": 0.0}, \"orientation\": {\"x\": 0.0, \"y\": 0.0, \"z\": -0.5472193956375122, \"w\": 0.8369892239570618}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, \"twist\": {\"twist\": {\"linear\": {\"x\": 0.0003163835790473968, \"y\": 0.0, \"z\": 0.0}, \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0009506940841674805}}, \"covariance\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}}___END___";               /* String to send to echo server */
     char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
     unsigned int echoStringLen;      /* Length of string to echo */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
@@ -94,8 +95,8 @@ int main(int argc, char *argv[])
     echoStringLen = strlen(echoString);          /* Determine input length */
 
     // /* Send the string to the server */
-    // if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
-    //     DieWithError("send() sent a different number of bytes than expected");
+    if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
+        DieWithError("send() sent a different number of bytes than expected");
 
     /* Receive the same string back from the server */
     totalBytesRcvd = 0;
@@ -129,7 +130,8 @@ int main(int argc, char *argv[])
         //     printf("hello");
         // }
         echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
-        printf("%s", echoBuffer);      /* Print the echo buffer */
+        // printf("%s", echoBuffer);      /* Print the echo buffer */
+        dataString.append(echoBuffer);
     }
 
     printf("\n");    /* Print a final linefeed */
@@ -145,7 +147,7 @@ int main(int argc, char *argv[])
 
     Message_Odom odomMessage;
     odomMessage.type = PROD_MSG;
-    for(int i : arPose)
+    for(int i = 0; i < 6; i++)
     {
         odomMessage.pose[i] = arPose[i];
     }
@@ -157,7 +159,8 @@ int main(int argc, char *argv[])
         std::cout << "msgq_odom send failed" << std::endl;
     };
 
-    usleep(10000);
+    // usleep(10000);
+    usleep(2000000);
 
     }
 
@@ -167,7 +170,7 @@ int main(int argc, char *argv[])
 
 void producerHandler(int sig)
 {
-
+    exit(EXIT_SUCCESS);
 }
 
 
@@ -182,25 +185,25 @@ void poseExtract()
     pos_x_min = dataString.find_first_of("x")+2;
     pos_x_max = dataString.find_first_of("y");
     std::string pose_x = dataString.substr(pos_x_min,pos_x_max);
-    cout << pose_x << endl;
+    // cout << pose_x << endl;
     // string pose=pose_x;
     tmp = pose_x.substr(1, pose_x.find(delimiter) - 1);
-    cout<< tmp<< endl;
+    // cout<< tmp<< endl;
     pose_x=tmp;
-    cout <<pose_x<<endl;
+    cout << "Pos x: " << pose_x<<endl;
 
 
     pos_y_min = dataString.find_first_of("y")+2;
     pos_y_max = dataString.find_first_of("z");
     std::string pose_y = dataString.substr(pos_y_min,pos_y_max);
     tmp = pose_y.substr(1, pose_y.find(delimiter) - 1);
-    cout<< tmp<< endl;
+    // cout<< tmp<< endl;
     pose_y=tmp;
-    cout <<pose_y << endl;
+    cout << "Pos y: " << pose_y << endl;
 
     string orient=dataString.substr(dataString.find("orientation")+2, dataString.find("covariance"));
-    cout << dataString.find("orientation")+2<< endl;
-    cout<<orient<<endl;
+    // cout << dataString.find("orientation")+2<< endl;
+    // cout<<orient<<endl;
     std::string orient_x = orient.substr(orient.find_first_of("x")+2,orient.find_first_of("y"));
     //int test=orient.find("x");
     tmp = orient_x.substr(1, orient_x.find(delimiter) - 1);
@@ -229,4 +232,5 @@ void poseExtract()
     arPose[4] = stod(orient_z);
     arPose[5] = stod(orient_w);
 
+    dataString.clear();
 }
