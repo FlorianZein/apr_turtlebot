@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort = 9999;     /* Echo server port */
-    // const char *servIP = "192.168.100.54";      // local ip of desktop                /* Server IP address (dotted quad) */
-    const char *servIP = "172.19.178.59";
+    const char *servIP = "192.168.100.50";     /* Server IP address (dotted quad) */
+    // const char *servIP = "172.19.178.59";
     char echoString[] = "---START---{\"linear\": 0.00, \"angular\": 0.0}___END___";               /* String to send to echo server */
     char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
     unsigned int echoStringLen;      /* Length of string to echo */
@@ -77,9 +77,9 @@ int main(int argc, char *argv[])
         std::cout << "Read: " << velMessage.velocities[0] << " " << velMessage.velocities[1] << std::endl;        
         
         std::string str_stringecho = "---START---{\"linear\": " + std::to_string(velMessage.velocities[0]) + ", \"angular\": " + std::to_string(velMessage.velocities[1]) + "}___END___";
-        std::cout << str_stringecho << std::endl;
+        // std::cout << str_stringecho << std::endl;
         // echoString = str_stringecho.c_str();
-        std::cout << echoString << std::endl;
+        // std::cout << echoString << std::endl;
         std::strcpy(echoString, str_stringecho.c_str());
         // echoString = str_stringecho;
         std::cout << echoString << std::endl;
@@ -111,48 +111,48 @@ int main(int argc, char *argv[])
 
         /* Receive the same string back from the server */
         totalBytesRcvd = 0;
-        printf("Received: ");                /* Setup to print the echoed string */
-        while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
-                    echoBuffer[bytesRcvd-8] == '_'  &&
-                    echoBuffer[bytesRcvd-7] == '_'  &&
-                    echoBuffer[bytesRcvd-6] == 'E'  &&
-                    echoBuffer[bytesRcvd-5] == 'N'  &&
-                    echoBuffer[bytesRcvd-4] == 'D'  &&
-                    echoBuffer[bytesRcvd-3] == '_'  &&
-                    echoBuffer[bytesRcvd-2] == '_'  &&
-                    echoBuffer[bytesRcvd-1] == '_'      ))
-        {
-            /* Receive up to the buffer size (minus 1 to leave space for
-               a null terminator) bytes from the sender */
-            if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
-                DieWithError("recv() failed or connection closed prematurely");
-            totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
-            // std::cout << bytesRcvd << std::endl;
-            // if( echoBuffer[bytesRcvd-9] == '_'  &&
-            //     echoBuffer[bytesRcvd-8] == '_'  &&
-            //     echoBuffer[bytesRcvd-7] == '_'  &&
-            //     echoBuffer[bytesRcvd-6] == 'E'  &&
-            //     echoBuffer[bytesRcvd-5] == 'N'  &&
-            //     echoBuffer[bytesRcvd-4] == 'D'  &&
-            //     echoBuffer[bytesRcvd-3] == '_'  &&
-            //     echoBuffer[bytesRcvd-2] == '_'  &&
-            //     echoBuffer[bytesRcvd-1] == '_')
-            // {
-            //     printf("hello");
-            // }
-            echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
-            printf("%s", echoBuffer);      /* Print the echo buffer */
-        }
+        // printf("Received: ");                /* Setup to print the echoed string */
+        // while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
+        //             echoBuffer[bytesRcvd-8] == '_'  &&
+        //             echoBuffer[bytesRcvd-7] == '_'  &&
+        //             echoBuffer[bytesRcvd-6] == 'E'  &&
+        //             echoBuffer[bytesRcvd-5] == 'N'  &&
+        //             echoBuffer[bytesRcvd-4] == 'D'  &&
+        //             echoBuffer[bytesRcvd-3] == '_'  &&
+        //             echoBuffer[bytesRcvd-2] == '_'  &&
+        //             echoBuffer[bytesRcvd-1] == '_'      ))
+        // {
+        //     /* Receive up to the buffer size (minus 1 to leave space for
+        //        a null terminator) bytes from the sender */
+        //     if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
+        //         DieWithError("recv() failed or connection closed prematurely");
+        //     totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
+        //     // std::cout << bytesRcvd << std::endl;
+        //     // if( echoBuffer[bytesRcvd-9] == '_'  &&
+        //     //     echoBuffer[bytesRcvd-8] == '_'  &&
+        //     //     echoBuffer[bytesRcvd-7] == '_'  &&
+        //     //     echoBuffer[bytesRcvd-6] == 'E'  &&
+        //     //     echoBuffer[bytesRcvd-5] == 'N'  &&
+        //     //     echoBuffer[bytesRcvd-4] == 'D'  &&
+        //     //     echoBuffer[bytesRcvd-3] == '_'  &&
+        //     //     echoBuffer[bytesRcvd-2] == '_'  &&
+        //     //     echoBuffer[bytesRcvd-1] == '_')
+        //     // {
+        //     //     printf("hello");
+        //     // }
+        //     echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
+        //     printf("%s", echoBuffer);      /* Print the echo buffer */
+        // }
 
-        printf("\n");    /* Print a final linefeed */
-        echoBuffer[bytesRcvd-1] = 'X';
+        // printf("\n");    /* Print a final linefeed */
+        // echoBuffer[bytesRcvd-1] = 'X';
 
         
 
         close(sock);
 
-        // usleep(10000);
-        usleep(2000000);
+        usleep(10); // 0.5ms
+        // usleep(2000000);
 
     }
 

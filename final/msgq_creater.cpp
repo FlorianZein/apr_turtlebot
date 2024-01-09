@@ -68,7 +68,7 @@ int main()
     while(true)
     {
         // wait till cancelation 
-        usleep(1000);
+        usleep(100);
     }
 }
 

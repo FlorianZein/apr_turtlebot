@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
     close(sock);
 
-    usleep(10000); // 10ms
+    usleep(10);  // 10ms
 
     }
 
