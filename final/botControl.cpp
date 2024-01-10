@@ -55,6 +55,7 @@ double PI = 3.141592653589793238463;
 
 const unsigned int numGoPoses = 8;
 Pose2d goPoses[numGoPoses];
+Pose2d posePole;
 
 Pose2d currentPose;
 // double start_x = 0;
@@ -108,6 +109,7 @@ bool wallFollowing = false;
 
 Pose2d firstgoaltest;
 Pose2d firstodomtest;
+
 
 
 
@@ -252,9 +254,8 @@ int main()
 
             // anfangsposition von y
             laserDistanceMiddle = (distanceLeft + distanceRight) / 2;
-            
 
-            // REAL Positiona
+            // REAL Positions new with first theta
             goPoses[0].x = currentPose.x;
             goPoses[0].y = currentPose.y;
             goPoses[0].theta = currentPose.theta;
@@ -263,31 +264,35 @@ int main()
 
             goPoses[7].x = goPoses[0].x;
             goPoses[7].y = goPoses[0].y;
-            goPoses[7].theta = (180.0 * PI / 180)  ;
+            goPoses[7].theta = goPoses[0].theta + (180.0 * PI / 180)  ;
             std:: cout << "Go7x: " <<goPoses[7].x << std::endl;
             std:: cout << "Go7y: " <<goPoses[7].y << std::endl;
 
-            goPoses[1].x = goPoses[0].x + distanceToPoleMiddle - distanceFromPole;
-            goPoses[1].y = goPoses[0].y;
-            goPoses[1].theta = (-90.0 * PI / 180) ;
+            posePole.x = goPoses[0].x + cos(goPoses[0].theta) * (distanceToPoleMiddle);
+            posePole.y = goPoses[0].y + sin(goPoses[0].theta) * (distanceToPoleMiddle);
+            posePole.theta = goPoses[0].theta;
+
+            goPoses[1].x = posePole.x + cos(posePole.theta + PI) * (distanceFromPole);
+            goPoses[1].y = posePole.y + sin(posePole.theta + PI) * (distanceFromPole);
+            goPoses[1].theta = posePole.theta + (-90.0 * PI / 180) ;
             std:: cout << "Go1x: " <<goPoses[1].x << std::endl;
             std:: cout << "Go1y: " <<goPoses[1].y << std::endl;
 
-            goPoses[2].x = goPoses[1].x + distanceFromPole;
-            goPoses[2].y = goPoses[1].y - distanceFromPole;
-            goPoses[2].theta =  0.0 ;
+            goPoses[2].x = posePole.x + cos(posePole.theta - PI/2) * (distanceFromPole);
+            goPoses[2].y = posePole.y + sin(posePole.theta - PI/2) * (distanceFromPole);
+            goPoses[2].theta = posePole.theta + 0.0 ;
             std:: cout << "Go2x: " <<goPoses[2].x << std::endl;
             std:: cout << "Go2y: " <<goPoses[2].y << std::endl;
 
-            goPoses[3].x = goPoses[1].x + 2*distanceFromPole;
-            goPoses[3].y = goPoses[1].y;
-            goPoses[3].theta =  (90.0 * PI / 180) ;
+            goPoses[3].x = posePole.x + cos(posePole.theta) * (distanceFromPole);
+            goPoses[3].y = posePole.y + sin(posePole.theta) * (distanceFromPole);
+            goPoses[3].theta = posePole.theta + (90.0 * PI / 180) ;
             std:: cout << "Go3x: " <<goPoses[3].x << std::endl;
             std:: cout << "Go3y: " <<goPoses[3].y << std::endl;
 
-            goPoses[4].x = goPoses[1].x + distanceFromPole;
-            goPoses[4].y = goPoses[1].y + distanceFromPole;
-            goPoses[4].theta = (180.0 * PI / 180) ;
+            goPoses[4].x = posePole.x + cos(posePole.theta + PI/2) * (distanceFromPole);
+            goPoses[4].y = posePole.y + sin(posePole.theta + PI/2) * (distanceFromPole);
+            goPoses[4].theta = posePole.theta + (180.0 * PI / 180) ;
             std:: cout << "Go4x: " <<goPoses[4].x << std::endl;
             std:: cout << "Go4y: " <<goPoses[4].y << std::endl;
 
@@ -299,9 +304,59 @@ int main()
 
             goPoses[6].x = goPoses[5].x;
             goPoses[6].y = goPoses[5].y;
-            goPoses[6].theta =  (180.0 * PI / 180) ;
+            goPoses[6].theta = goPoses[0].theta + (180.0 * PI / 180) ;
             std:: cout << "Go6x: " <<goPoses[6].x << std::endl;
             std:: cout << "Go6y: " <<goPoses[6].y << std::endl;
+            
+
+            // // REAL Positiona
+            // goPoses[0].x = currentPose.x;
+            // goPoses[0].y = currentPose.y;
+            // goPoses[0].theta = currentPose.theta;
+            // std:: cout << "Go0x: " <<goPoses[0].x << std::endl;
+            // std:: cout << "Go0y: " <<goPoses[0].y << std::endl;
+
+            // goPoses[7].x = goPoses[0].x;
+            // goPoses[7].y = goPoses[0].y;
+            // goPoses[7].theta = (180.0 * PI / 180)  ;
+            // std:: cout << "Go7x: " <<goPoses[7].x << std::endl;
+            // std:: cout << "Go7y: " <<goPoses[7].y << std::endl;
+
+            // goPoses[1].x = goPoses[0].x + distanceToPoleMiddle - distanceFromPole;
+            // goPoses[1].y = goPoses[0].y;
+            // goPoses[1].theta = (-90.0 * PI / 180) ;
+            // std:: cout << "Go1x: " <<goPoses[1].x << std::endl;
+            // std:: cout << "Go1y: " <<goPoses[1].y << std::endl;
+
+            // goPoses[2].x = goPoses[1].x + distanceFromPole;
+            // goPoses[2].y = goPoses[1].y - distanceFromPole;
+            // goPoses[2].theta =  0.0 ;
+            // std:: cout << "Go2x: " <<goPoses[2].x << std::endl;
+            // std:: cout << "Go2y: " <<goPoses[2].y << std::endl;
+
+            // goPoses[3].x = goPoses[1].x + 2*distanceFromPole;
+            // goPoses[3].y = goPoses[1].y;
+            // goPoses[3].theta =  (90.0 * PI / 180) ;
+            // std:: cout << "Go3x: " <<goPoses[3].x << std::endl;
+            // std:: cout << "Go3y: " <<goPoses[3].y << std::endl;
+
+            // goPoses[4].x = goPoses[1].x + distanceFromPole;
+            // goPoses[4].y = goPoses[1].y + distanceFromPole;
+            // goPoses[4].theta = (180.0 * PI / 180) ;
+            // std:: cout << "Go4x: " <<goPoses[4].x << std::endl;
+            // std:: cout << "Go4y: " <<goPoses[4].y << std::endl;
+
+            // goPoses[5].x = goPoses[1].x;
+            // goPoses[5].y = goPoses[1].y;
+            // goPoses[5].theta = goPoses[1].theta ;
+            // std:: cout << "Go5x: " <<goPoses[5].x << std::endl;
+            // std:: cout << "Go5y: " <<goPoses[5].y << std::endl;
+
+            // goPoses[6].x = goPoses[5].x;
+            // goPoses[6].y = goPoses[5].y;
+            // goPoses[6].theta =  (180.0 * PI / 180) ;
+            // std:: cout << "Go6x: " <<goPoses[6].x << std::endl;
+            // std:: cout << "Go6y: " <<goPoses[6].y << std::endl;
 
 
             // // TEST
