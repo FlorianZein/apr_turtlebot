@@ -12,14 +12,14 @@ key_t KEY_ODOM          = 810;
 key_t KEY_LASER         = 820;
 key_t KEY_VEL           = 830;
 
-key_t KEY_ODOM_CAST       = 811;
-key_t KEY_LASER_CAST      = 821;
-key_t KEY_VEL_CAST        = 831;
+key_t KEY_ODOM_ACT       = 710;
+key_t KEY_LASER_ACT      = 720;
+key_t KEY_VEL_ACT        = 730;
 
 
 
 
-int msgqid_odom, msgqid_laser, msgqid_vel, msgqid_odom_cast, msgqid_laser_cast, msgqid_vel_cast;  
+int msgqid_odom, msgqid_laser, msgqid_vel, msgqid_odom_act, msgqid_laser_act, msgqid_vel_act;  
 
 void msgqHandler(int sig);
 
@@ -43,20 +43,20 @@ int main()
       exit(EXIT_FAILURE);
     }
 
-    msgqid_odom_cast = msgget(KEY_ODOM_CAST, 0666 | IPC_CREAT);
-    if (msgqid_odom_cast == -1) {
+    msgqid_odom_act = msgget(KEY_ODOM_ACT, 0666 | IPC_CREAT);
+    if (msgqid_odom_act == -1) {
       std::cerr << "msgget odom cast failed\n";
       exit(EXIT_FAILURE);
     }
 
-    msgqid_laser_cast = msgget(KEY_LASER_CAST, 0666 | IPC_CREAT);
-    if (msgqid_laser_cast == -1) {
+    msgqid_laser_act = msgget(KEY_LASER_ACT, 0666 | IPC_CREAT);
+    if (msgqid_laser_act == -1) {
       std::cerr << "msgget last cast failed\n";
       exit(EXIT_FAILURE);
     }
 
-    msgqid_vel_cast = msgget(KEY_VEL_CAST, 0666 | IPC_CREAT);
-    if (msgqid_vel_cast == -1) {
+    msgqid_vel_act = msgget(KEY_VEL_ACT, 0666 | IPC_CREAT);
+    if (msgqid_vel_act == -1) {
       std::cerr << "msgget vel cast failed\n";
       exit(EXIT_FAILURE);
     }
@@ -90,17 +90,17 @@ void msgqHandler(int sig)
         exit(EXIT_FAILURE);
     }
 
-    if (msgctl(msgqid_odom_cast, IPC_RMID, 0) == -1) {
+    if (msgctl(msgqid_odom_act, IPC_RMID, 0) == -1) {
         std::cerr << "msgctl(IPC_RMID) failed\n";
         exit(EXIT_FAILURE);
     }
 
-    if (msgctl(msgqid_laser_cast, IPC_RMID, 0) == -1) {
+    if (msgctl(msgqid_laser_act, IPC_RMID, 0) == -1) {
         std::cerr << "msgctl(IPC_RMID) failed\n";
         exit(EXIT_FAILURE);
     }
 
-    if (msgctl(msgqid_vel_cast, IPC_RMID, 0) == -1) {
+    if (msgctl(msgqid_vel_act, IPC_RMID, 0) == -1) {
         std::cerr << "msgctl(IPC_RMID) failed\n";
         exit(EXIT_FAILURE);
     }

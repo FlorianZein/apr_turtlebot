@@ -18,13 +18,20 @@
 #define RCVBUFSIZE 512   /* Size of receive buffer */
 
 key_t KEY_VEL = 830;
+key_t KEY_VEL_ACT        = 730;
 void consumerHandler(int sig);
-int msgqid_vel;
+int msgqid_vel, msgqid_vel_act;
 enum MessageType {PROD_MSG=1, CONS_MSG };
 struct Message_Vel
 {
     long type;
     float velocities[2];
+};
+
+struct Message_Act
+{
+    long type;
+    bool act;
 };
 
 
@@ -50,8 +57,25 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
     }
 
+    msgqid_vel_act = msgget(KEY_VEL_ACT, 0666 | IPC_CREAT);
+    if (msgqid_vel_act == -1) {
+      std::cerr << "msgget odom prod failed\n";
+      exit(EXIT_FAILURE);
+    }
+
     signal(SIGINT, consumerHandler);
     std::cout << "I am the vel cons" << std::endl;
+
+    Message_Act actVel;
+
+    actVel.type = PROD_MSG;
+    actVel.act = true;
+
+
+    if(msgsnd(msgqid_vel_act, &actVel, sizeof(bool), 0) != 0)
+    {
+        std::cout << "msgq_odom send failed" << std::endl;
+    };
 
     // if ((argc < 3) || (argc > 4))    /* Test for correct number of arguments */
     // {
@@ -82,7 +106,7 @@ int main(int argc, char *argv[])
         // std::cout << echoString << std::endl;
         std::strcpy(echoString, str_stringecho.c_str());
         // echoString = str_stringecho;
-        std::cout << echoString << std::endl;
+        // std::cout << echoString << std::endl;
 
 
 
@@ -90,6 +114,7 @@ int main(int argc, char *argv[])
         if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
             DieWithError("socket() failed");
 
+        std::cout << sock << std::endl;
         /* Construct the server address structure */
         memset(&echoServAddr, 0, sizeof(echoServAddr));     /* Zero out structure */
         echoServAddr.sin_family      = AF_INET;             /* Internet address family */
@@ -110,7 +135,7 @@ int main(int argc, char *argv[])
         std::cout << "test" << std::endl;
 
         /* Receive the same string back from the server */
-        totalBytesRcvd = 0;
+        // totalBytesRcvd = 0;
         // printf("Received: ");                /* Setup to print the echoed string */
         // while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
         //             echoBuffer[bytesRcvd-8] == '_'  &&
@@ -150,6 +175,17 @@ int main(int argc, char *argv[])
         
 
         close(sock);
+
+        
+
+        actVel.type = PROD_MSG;
+        actVel.act = true;
+
+
+        if(msgsnd(msgqid_vel_act, &actVel, sizeof(bool), 0) != 0)
+        {
+            std::cout << "msgq_odom send failed" << std::endl;
+        };
 
         usleep(10); // 0.5ms
         // usleep(2000000);

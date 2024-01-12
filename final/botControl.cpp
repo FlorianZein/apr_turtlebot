@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <stdlib.h>  
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -15,8 +15,9 @@
 key_t KEY_ODOM          = 810;
 key_t KEY_LASER         = 820;
 key_t KEY_VEL           = 830;
+key_t KEY_VEL_ACT        = 730;
 
-int msgqid_odom, msgqid_laser, msgqid_vel;
+int msgqid_odom, msgqid_laser, msgqid_vel, msgqid_vel_act;
 
 enum MessageType {PROD_MSG=1, CONS_MSG};
 
@@ -38,6 +39,12 @@ struct Message_Odom
     double pose[6];
 };
 
+struct Message_Act
+{
+    long type;
+    bool act;
+};
+
 void msgqHandler(int sig)
 {
     exit(EXIT_SUCCESS);
@@ -53,7 +60,7 @@ struct Pose2d
 
 double PI = 3.141592653589793238463;
 
-const unsigned int numGoPoses = 8;
+const unsigned int numGoPoses = 7;
 Pose2d goPoses[numGoPoses];
 Pose2d posePole;
 
@@ -67,9 +74,17 @@ Pose2d currentGoal;
 // double goal_y = 0;
 // double goal_theta = 0;
 
-double kp = 0.2;
-double k_alpha = 0.7;
-double k_beta = -0.8;
+//double kp = 0.2;
+//double k_alpha = 0.7;
+//double k_beta = -0.8;
+
+// double kp = 0.3;
+// double k_alpha = 0.8;
+// double k_beta = -0.15;
+
+double kp = 0.5;
+double k_alpha = 3.0;
+double k_beta = 1.0;
 
 Pose2d currentDeltaPose;
 // double delta_x = 0.0;
@@ -77,7 +92,7 @@ Pose2d currentDeltaPose;
 // double delta_theta = 0.0;
 
 double rho = 0;
-double alpha = 0; 
+double alpha = 0;
 double beta = 0;
 
 double vt = 0;
@@ -90,25 +105,29 @@ Message_Laser laserMsg;
 Message_Vel velMsg;
 
 int goalCount = 0;
+int poleCounter = 0;
 
 
 bool goPosesDefined = false;
 
 // für berechnung der poses
-const int numOfScansForDistanceToPole = 20;
+const int numOfScansForDistanceToPole = 50;
 double distanceToPoleMiddle = 0;
 double poleDiameter = 0.085;
-double distanceFromPole = poleDiameter + 0.15;   // normalabstand von der pole
+double distanceFromPole = poleDiameter + 0.30;   // normalabstand von der pole
 
 bool driveBool = false;
 
-// variables for laserscan box wall 
+// variables for laserscan box wall
 double distanceLeft = 0, distanceRight = 0, laserDistanceMiddle = 0, deltaDistanceWall = 0;
 double k_wall = 0.5;
 bool wallFollowing = false;
 
 Pose2d firstgoaltest;
 Pose2d firstodomtest;
+
+const double VT_MAX = 0.07;
+const double WT_MAX = 1.0;
 
 
 
@@ -126,24 +145,24 @@ Pose2d firstodomtest;
 // limit angles to -180 to 180 degrees
 double limitAng(double param)
 {
-    // if(param > PI && param <= PI)
-    // {
+    if(param > PI && param <= PI)
+    {
 
-    // }
-    // else if(param < 0)
-    // {
-    //     while(param < -PI)
-    //     {
-    //         param = param + 2*PI;
-    //     }
-    // }
-    // else if(param > 0)
-    // {
-    //     while(param > PI)
-    //     {
-    //         param = param - 2*PI;
-    //     }
-    // }
+    }
+    else if(param < 0)
+    {
+        while(param < -PI)
+        {
+            param = param + 2*PI;
+        }
+    }
+    else if(param > 0)
+    {
+        while(param > PI)
+        {
+            param = param - 2*PI;
+        }
+    }
 
     return param;
 }
@@ -168,10 +187,16 @@ int main()
     if (msgqid_vel == -1) {
       std::cerr << "msgget laser prod failed\n";
       exit(EXIT_FAILURE);
-    }  
+    }
+
+    msgqid_vel_act = msgget(KEY_VEL_ACT, 0666 | IPC_CREAT);
+    if (msgqid_vel_act == -1) {
+      std::cerr << "msgget odom prod failed\n";
+      exit(EXIT_FAILURE);
+    }
 
 
-    
+
     while(true)
     {
         // DONE odometrie theta
@@ -207,7 +232,7 @@ int main()
         currentPose.x = odomMsg.pose[0];
         currentPose.y = odomMsg.pose[1];
         // möglicherweise muss atan2 * -1 gerechnet werden
-        currentPose.theta = atan2(  (2.0 * (odomMsg.pose[5]*odomMsg.pose[4] + odomMsg.pose[2]*odomMsg.pose[3])), 
+        currentPose.theta = atan2(  (2.0 * (odomMsg.pose[5]*odomMsg.pose[4] + odomMsg.pose[2]*odomMsg.pose[3])),
                                     (1.0 - 2.0*(pow(odomMsg.pose[3], 2) + pow(odomMsg.pose[4], 2)))
                                     );
 
@@ -218,22 +243,42 @@ int main()
             // laserscan auswertung für poledistance
             for(int i = 0; i < numOfScansForDistanceToPole; i++)
             {
+                Message_Vel actVelMsg;
+
+                actVelMsg.type = PROD_MSG;
+                actVelMsg.velocities[0] = 0.0;
+                actVelMsg.velocities[1] = 0.0;
+
+
+                if(msgsnd(msgqid_vel, &actVelMsg, sizeof(float) * 2, 0) != 0)
+                {
+                    std::cout << "msgq_odom send failed" << std::endl;
+                };
+
                 msgrcv(msgqid_odom, &odomMsg, sizeof(double) * 6, PROD_MSG, 0);
                 int tmp = msgrcv(msgqid_laser, &laserMsg, sizeof(double) * 360, PROD_MSG, 0);
                 if(tmp > 0)
                 {
-                    double laserToPole = laserMsg.scan[358] + laserMsg.scan[359] + laserMsg.scan[0] + laserMsg.scan[1] + laserMsg.scan[2];
-                    laserToPole = laserToPole / 5;
-                    distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
-
-                    // double laserToPole = laserMsg.scan[0];
+                    // double laserToPole = laserMsg.scan[358] + laserMsg.scan[359] + laserMsg.scan[0] + laserMsg.scan[1] + laserMsg.scan[2];
+                    // laserToPole = laserToPole / 5;
                     // distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
 
-                    // tmp = 0;
-                }                
+                    double laserToPole = laserMsg.scan[0];
+                    if(laserMsg.scan[0] > 0.0)
+                    {
+
+                        distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                        std::cout << "laserdata: " << laserMsg.scan[0] << std::endl;
+                        poleCounter++;
+
+                    }
+
+
+                    tmp = 0;
+                }
             }
 
-            distanceToPoleMiddle = distanceToPoleMiddle / numOfScansForDistanceToPole;
+            distanceToPoleMiddle = distanceToPoleMiddle / poleCounter;
             std::cout << "distance_middle: " << distanceToPoleMiddle << std::endl;
 
             // gettin wall distance
@@ -262,52 +307,57 @@ int main()
             std:: cout << "Go0x: " <<goPoses[0].x << std::endl;
             std:: cout << "Go0y: " <<goPoses[0].y << std::endl;
 
-            goPoses[7].x = goPoses[0].x;
-            goPoses[7].y = goPoses[0].y;
-            goPoses[7].theta = goPoses[0].theta + (180.0 * PI / 180)  ;
+            goPoses[6].x = goPoses[0].x;
+            goPoses[6].y = goPoses[0].y;
+            goPoses[6].theta = limitAng( goPoses[0].theta + (180.0 * PI / 180) ) ;
             std:: cout << "Go7x: " <<goPoses[7].x << std::endl;
             std:: cout << "Go7y: " <<goPoses[7].y << std::endl;
 
+
             posePole.x = goPoses[0].x + cos(goPoses[0].theta) * (distanceToPoleMiddle);
             posePole.y = goPoses[0].y + sin(goPoses[0].theta) * (distanceToPoleMiddle);
-            posePole.theta = goPoses[0].theta;
+            posePole.theta = limitAng( goPoses[0].theta );
+
+            std:: cout << "polex: " << posePole.x << std::endl;
+            std:: cout << "poley: " << posePole.y << std::endl;
+            std::cout << "posePole theta" << posePole.theta << std::endl;
 
             goPoses[1].x = posePole.x + cos(posePole.theta + PI) * (distanceFromPole);
             goPoses[1].y = posePole.y + sin(posePole.theta + PI) * (distanceFromPole);
-            goPoses[1].theta = posePole.theta + (-90.0 * PI / 180) ;
+            goPoses[1].theta = limitAng( posePole.theta + (-0.0 * PI / 180) );
             std:: cout << "Go1x: " <<goPoses[1].x << std::endl;
             std:: cout << "Go1y: " <<goPoses[1].y << std::endl;
 
             goPoses[2].x = posePole.x + cos(posePole.theta - PI/2) * (distanceFromPole);
             goPoses[2].y = posePole.y + sin(posePole.theta - PI/2) * (distanceFromPole);
-            goPoses[2].theta = posePole.theta + 0.0 ;
+            goPoses[2].theta = limitAng( posePole.theta + 0.0 );
             std:: cout << "Go2x: " <<goPoses[2].x << std::endl;
             std:: cout << "Go2y: " <<goPoses[2].y << std::endl;
 
             goPoses[3].x = posePole.x + cos(posePole.theta) * (distanceFromPole);
             goPoses[3].y = posePole.y + sin(posePole.theta) * (distanceFromPole);
-            goPoses[3].theta = posePole.theta + (90.0 * PI / 180) ;
+            goPoses[3].theta = limitAng( posePole.theta + (90.0 * PI / 180) );
             std:: cout << "Go3x: " <<goPoses[3].x << std::endl;
             std:: cout << "Go3y: " <<goPoses[3].y << std::endl;
 
             goPoses[4].x = posePole.x + cos(posePole.theta + PI/2) * (distanceFromPole);
             goPoses[4].y = posePole.y + sin(posePole.theta + PI/2) * (distanceFromPole);
-            goPoses[4].theta = posePole.theta + (180.0 * PI / 180) ;
+            goPoses[4].theta = limitAng( posePole.theta + (178.0 * PI / 180) );
             std:: cout << "Go4x: " <<goPoses[4].x << std::endl;
             std:: cout << "Go4y: " <<goPoses[4].y << std::endl;
 
             goPoses[5].x = goPoses[1].x;
             goPoses[5].y = goPoses[1].y;
-            goPoses[5].theta = goPoses[1].theta ;
+            goPoses[5].theta = limitAng( goPoses[1].theta + (-135.0 * PI / 180) );
             std:: cout << "Go5x: " <<goPoses[5].x << std::endl;
             std:: cout << "Go5y: " <<goPoses[5].y << std::endl;
 
-            goPoses[6].x = goPoses[5].x;
-            goPoses[6].y = goPoses[5].y;
-            goPoses[6].theta = goPoses[0].theta + (180.0 * PI / 180) ;
-            std:: cout << "Go6x: " <<goPoses[6].x << std::endl;
-            std:: cout << "Go6y: " <<goPoses[6].y << std::endl;
-            
+            // goPoses[6].x = goPoses[5].x;
+            // goPoses[6].y = goPoses[5].y;
+            // goPoses[6].theta = limitAng( goPoses[0].theta + (180.0 * PI / 180) );
+            // std:: cout << "Go6x: " <<goPoses[6].x << std::endl;
+            // std:: cout << "Go6y: " <<goPoses[6].y << std::endl;
+
 
             // // REAL Positiona
             // goPoses[0].x = currentPose.x;
@@ -392,7 +442,7 @@ int main()
             // goPoses[6].y = goPoses[5].y;
             // goPoses[6].theta = goPoses[0].theta + (180.0 * PI / 180);
 
-            
+
 
             currentGoal = goPoses[1];
             goalCount = 1;
@@ -405,6 +455,9 @@ int main()
             std::cout << "cgy: " << currentGoal.y << std::endl;
             std::cout << "cgtheta: " << currentGoal.theta << std::endl;
             std::cout << "----------" << std::endl;
+
+            std::string strTmp;
+            std::cin >> strTmp;
         }
 
 
@@ -439,7 +492,7 @@ int main()
 
 
 
-        
+
 
 
 
@@ -447,7 +500,7 @@ int main()
 
         // std::cin >> tmp;
         // if tmp == "drive";
-        driveBool = true; 
+        driveBool = true;
 
         if(driveBool == true)
         {
@@ -455,25 +508,27 @@ int main()
             currentDeltaPose.y = currentGoal.y - currentPose.y;
             currentDeltaPose.theta = currentGoal.theta  - currentPose.theta;
 
+            currentDeltaPose.theta = limitAng( currentDeltaPose.theta );
+
             rho = sqrt(pow(currentDeltaPose.x, 2) + pow(currentDeltaPose.y, 2));
             alpha = (-currentPose.theta + atan2(currentDeltaPose.y, currentDeltaPose.x));
-            if(alpha >= PI){
-            alpha = PI;
-            }
-            else if(alpha < (-PI)){
-                alpha = (-PI);
-            }
-            // alpha = limitAng( alpha );
+            // if(alpha >= PI){
+            // alpha = PI;
+            // }
+            // else if(alpha < (-PI)){
+            //     alpha = (-PI);
+            // }
+            alpha = limitAng( alpha );
 
             beta = -currentDeltaPose.theta - alpha;
-            if(beta < (-PI)){
-            beta = (-PI);
-            }
-            else if(beta > PI){
-                beta = PI;
-            }
+            // if(beta < (-PI)){
+            // beta = (-PI);
+            // }
+            // else if(beta > PI){
+            //     beta = PI;
+            // }
 
-            // beta = limitAng( beta );
+            beta = limitAng( beta );
 
             if(drive == true)
             {
@@ -485,36 +540,37 @@ int main()
                 //     wt = wt + k_wall*deltaDistanceWall;
                 // }
 
-                if(vt > 0.22)
+                if(vt > VT_MAX)
                 {
-                    vt = 0.22;
+                    vt = VT_MAX;
                 }
 
-                if(wt > 2.84)
+                if(wt > WT_MAX)
                 {
-                    wt = 2.84;
+                    wt = WT_MAX;
                 }
-                else if(wt < -2.84)
+                else if(wt < -WT_MAX)
                 {
-                    wt = -2.84;
+                    wt = -WT_MAX;
                 }
 
-                if((abs(currentDeltaPose.x) < 0.15) && (abs(currentDeltaPose.y) < 0.15) && abs(currentDeltaPose.theta) < 0.6 && goalCount < numGoPoses)
+                if((abs(currentDeltaPose.x) < 0.1) && (abs(currentDeltaPose.y) < 0.1) && (abs(currentDeltaPose.theta) < 0.2)  && goalCount < numGoPoses)
                 {
                     vt = 0.0;
                     wt = 0.0;
 
                     goalCount++;
-                    if(goalCount == 8)
+                    if(goalCount == numGoPoses)
                     {
                         // stop while and end program
-                        break;
+                        drive = false;
                     }
                     currentGoal = goPoses[goalCount];
+                    std::cout << goalCount << std::endl;
 
                 }
 
-                
+
             }
             else
             {
@@ -534,11 +590,11 @@ int main()
 
         // std::cout << "cpx: " << currentPose.x << std::endl;
         // std::cout << "cpy: " << currentPose.y << std::endl;
-        // std::cout << "cptheta: " << currentPose.theta << std::endl; 
+        // std::cout << "cptheta: " << currentPose.theta << std::endl;
 
         // std::cout << "gpx: " << currentGoal.x << std::endl;
         // std::cout << "gpy: " << currentGoal.y << std::endl;
-        // std::cout << "gptheta: " << currentGoal.theta << std::endl; 
+        // std::cout << "gptheta: " << currentGoal.theta << std::endl;
 
         // std::cout << "current goal num: " << goalCount << std::endl;
 
@@ -550,11 +606,11 @@ int main()
 
         // std::cout << "fox: " << firstodomtest.x << std::endl;
         // std::cout << "foy: " << firstodomtest.y << std::endl;
-        // std::cout << "fotheta: " << firstodomtest.theta << std::endl; 
+        // std::cout << "fotheta: " << firstodomtest.theta << std::endl;
 
         // std::cout << "fgx: " << firstgoaltest.x << std::endl;
         // std::cout << "fgy: " << firstgoaltest.y << std::endl;
-        // std::cout << "fgtheta: " << firstgoaltest.theta << std::endl; 
+        // std::cout << "fgtheta: " << firstgoaltest.theta << std::endl;
 
         // std::cout << "wallfollowing: " << wallFollowing << std::endl;
 

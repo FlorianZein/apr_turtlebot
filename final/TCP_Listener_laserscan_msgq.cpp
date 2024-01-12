@@ -20,13 +20,19 @@
 #define RCVBUFSIZE 512   /* Size of receive buffer */
 
 key_t KEY_LASER = 820;
+key_t KEY_ODOM_ACT       = 710;
 void producerHandler (int sig);
-int msgqid_laser; 
+int msgqid_laser, msgqid_odom_act; 
 enum MessageType { PROD_MSG=1, CONS_MSG };
 struct Message_Laser
 {
     long type;
     double scan[360];
+};
+struct Message_Act
+{
+    long type;
+    bool act;
 };
 
 std::string dataString;
@@ -55,6 +61,13 @@ int main(int argc, char *argv[])
       std::cerr << "msgget laser prod failed\n";
       exit(EXIT_FAILURE);
     }
+
+    msgqid_odom_act = msgget(KEY_ODOM_ACT, 0666 | IPC_CREAT);
+    if (msgqid_odom_act == -1) {
+      std::cerr << "msgget odom prod failed\n";
+      exit(EXIT_FAILURE);
+    }
+
     signal(SIGINT, producerHandler);
     std::cout << "I am the laser prod" << std::endl;
 
@@ -77,92 +90,96 @@ int main(int argc, char *argv[])
 
     while(true)
     {
+        Message_Act actOdom;
+        msgrcv(msgqid_odom_act, &actOdom, sizeof(bool), PROD_MSG, 0);
 
-    /* Create a reliable, stream socket using TCP */
-    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        DieWithError("socket() failed");
-
-    /* Construct the server address structure */
-    memset(&echoServAddr, 0, sizeof(echoServAddr));     /* Zero out structure */
-    echoServAddr.sin_family      = AF_INET;             /* Internet address family */
-    echoServAddr.sin_addr.s_addr = inet_addr(servIP);   /* Server IP address */
-    echoServAddr.sin_port        = htons(echoServPort); /* Server port */
-
-    /* Establish the connection to the echo server */
-    if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("connect() failed");
-
-    echoStringLen = strlen(echoString);          /* Determine input length */
-
-    // /* Send the string to the server */
-    // if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
-    //     DieWithError("send() sent a different number of bytes than expected");
-
-    /* Receive the same string back from the server */
-    totalBytesRcvd = 0;
-    printf("Received: ");                /* Setup to print the echoed string */
-    while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
-                echoBuffer[bytesRcvd-8] == '_'  &&
-                echoBuffer[bytesRcvd-7] == '_'  &&
-                echoBuffer[bytesRcvd-6] == 'E'  &&
-                echoBuffer[bytesRcvd-5] == 'N'  &&
-                echoBuffer[bytesRcvd-4] == 'D'  &&
-                echoBuffer[bytesRcvd-3] == '_'  &&
-                echoBuffer[bytesRcvd-2] == '_'  &&
-                echoBuffer[bytesRcvd-1] == '_'      ))
-    {
-        /* Receive up to the buffer size (minus 1 to leave space for
-           a null terminator) bytes from the sender */
-        if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
-            DieWithError("recv() failed or connection closed prematurely");
-        totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
-        // std::cout << bytesRcvd << std::endl;
-        // if( echoBuffer[bytesRcvd-9] == '_'  &&
-        //     echoBuffer[bytesRcvd-8] == '_'  &&
-        //     echoBuffer[bytesRcvd-7] == '_'  &&
-        //     echoBuffer[bytesRcvd-6] == 'E'  &&
-        //     echoBuffer[bytesRcvd-5] == 'N'  &&
-        //     echoBuffer[bytesRcvd-4] == 'D'  &&
-        //     echoBuffer[bytesRcvd-3] == '_'  &&
-        //     echoBuffer[bytesRcvd-2] == '_'  &&
-        //     echoBuffer[bytesRcvd-1] == '_')
-        // {
-        //     printf("hello");
-        // }
-        echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
-        // printf("%s", echoBuffer);      /* Print the echo buffer */
-        dataString.append(echoBuffer);
-    }
-
-    printf("\n");    /* Print a final linefeed */
-    echoBuffer[bytesRcvd-1] = 'X';
-
-    close(sock);
-
-    usleep(10);
-
-    // std::cout << dataString << std::endl;
-
-    scanExtract();
+        /* Create a reliable, stream socket using TCP */
+        if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+            DieWithError("socket() failed");
 
 
-    Message_Laser laserMessage;
-    laserMessage.type = PROD_MSG;
-    
-    for(int i = 0; i < 360; i++)
-    {
-        laserMessage.scan[i] = rangesArray[i];
-    }
-    
-    usleep(10);
+        std::cout << sock << std::endl;
+        /* Construct the server address structure */
+        memset(&echoServAddr, 0, sizeof(echoServAddr));     /* Zero out structure */
+        echoServAddr.sin_family      = AF_INET;             /* Internet address family */
+        echoServAddr.sin_addr.s_addr = inet_addr(servIP);   /* Server IP address */
+        echoServAddr.sin_port        = htons(echoServPort); /* Server port */
 
-    if(msgsnd(msgqid_laser, &laserMessage, sizeof(double) * 360, 0) != 0)
-    {
-        std::cout << "msgq_laser send failed" << std::endl;
-    };
+        /* Establish the connection to the echo server */
+        if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+            DieWithError("connect() failed");
 
-    usleep(10);  // 10ms
-    // usleep(2000000);
+        echoStringLen = strlen(echoString);          /* Determine input length */
+
+        // /* Send the string to the server */
+        // if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
+        //     DieWithError("send() sent a different number of bytes than expected");
+
+        /* Receive the same string back from the server */
+        totalBytesRcvd = 0;
+        printf("Received: ");                /* Setup to print the echoed string */
+        while ( !(  echoBuffer[bytesRcvd-9] == '_'  &&
+                    echoBuffer[bytesRcvd-8] == '_'  &&
+                    echoBuffer[bytesRcvd-7] == '_'  &&
+                    echoBuffer[bytesRcvd-6] == 'E'  &&
+                    echoBuffer[bytesRcvd-5] == 'N'  &&
+                    echoBuffer[bytesRcvd-4] == 'D'  &&
+                    echoBuffer[bytesRcvd-3] == '_'  &&
+                    echoBuffer[bytesRcvd-2] == '_'  &&
+                    echoBuffer[bytesRcvd-1] == '_'      ))
+        {
+            /* Receive up to the buffer size (minus 1 to leave space for
+            a null terminator) bytes from the sender */
+            if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
+                DieWithError("recv() failed or connection closed prematurely");
+            totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
+            // std::cout << bytesRcvd << std::endl;
+            // if( echoBuffer[bytesRcvd-9] == '_'  &&
+            //     echoBuffer[bytesRcvd-8] == '_'  &&
+            //     echoBuffer[bytesRcvd-7] == '_'  &&
+            //     echoBuffer[bytesRcvd-6] == 'E'  &&
+            //     echoBuffer[bytesRcvd-5] == 'N'  &&
+            //     echoBuffer[bytesRcvd-4] == 'D'  &&
+            //     echoBuffer[bytesRcvd-3] == '_'  &&
+            //     echoBuffer[bytesRcvd-2] == '_'  &&
+            //     echoBuffer[bytesRcvd-1] == '_')
+            // {
+            //     printf("hello");
+            // }
+            echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
+            // printf("%s", echoBuffer);      /* Print the echo buffer */
+            dataString.append(echoBuffer);
+        }
+
+        printf("\n");    /* Print a final linefeed */
+        echoBuffer[bytesRcvd-1] = 'X';
+
+        close(sock);
+
+        usleep(10);
+
+        // std::cout << dataString << std::endl;
+
+        scanExtract();
+
+
+        Message_Laser laserMessage;
+        laserMessage.type = PROD_MSG;
+        
+        for(int i = 0; i < 360; i++)
+        {
+            laserMessage.scan[i] = rangesArray[i];
+        }
+        
+        usleep(10);
+
+        if(msgsnd(msgqid_laser, &laserMessage, sizeof(double) * 360, 0) != 0)
+        {
+            std::cout << "msgq_laser send failed" << std::endl;
+        };
+
+        usleep(1000);  // 100ms
+        // usleep(2000000);
 
     }
 
