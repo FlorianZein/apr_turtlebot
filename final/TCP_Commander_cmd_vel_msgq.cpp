@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort = 9999;     /* Echo server port */
-    const char *servIP = "192.168.100.50";     /* Server IP address (dotted quad) */
+    const char *servIP = "192.168.100.55";     /* Server IP address (dotted quad) */
     // const char *servIP = "172.19.178.59";
     char echoString[] = "---START---{\"linear\": 0.00, \"angular\": 0.0}___END___";               /* String to send to echo server */
     char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */

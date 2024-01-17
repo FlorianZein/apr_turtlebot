@@ -85,6 +85,7 @@ Pose2d currentGoal;
 double kp = 0.5;
 double k_alpha = 3.0;
 double k_beta = 1.0;
+double range = 2.0;
 
 Pose2d currentDeltaPose;
 // double delta_x = 0.0;
@@ -120,7 +121,7 @@ bool driveBool = false;
 
 // variables for laserscan box wall
 double distanceLeft = 0, distanceRight = 0, laserDistanceMiddle = 0, deltaDistanceWall = 0;
-double k_wall = 0.5;
+double k_wall = 1.33;
 bool wallFollowing = false;
 
 Pose2d firstgoaltest;
@@ -128,6 +129,9 @@ Pose2d firstodomtest;
 
 const double VT_MAX = 0.07;
 const double WT_MAX = 1.0;
+
+// const double VT_MAX = 0.1;
+// const double WT_MAX = 1.5;
 
 
 
@@ -263,15 +267,126 @@ int main()
                     // laserToPole = laserToPole / 5;
                     // distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
 
-                    double laserToPole = laserMsg.scan[0];
-                    if(laserMsg.scan[0] > 0.0)
+                    double laserToPole = 0;
+                    std::cout << "laserdata: " << laserMsg.scan[354] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[355] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[356] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[357] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[358] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[359] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[0] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[1] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[2] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[3] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[4] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[5] << std::endl;
+                    std::cout << "laserdata: " << laserMsg.scan[6] << std::endl;
+                    std::cout << "____________"<< std::endl;
+                    // if( (laserMsg.scan[357] > 0.0) && (laserMsg.scan[357] < range) &&
+                    //     (laserMsg.scan[358] > 0.0) && (laserMsg.scan[358] < range) &&
+                    //     (laserMsg.scan[359] > 0.0) && (laserMsg.scan[359] < range) &&
+                    //     (laserMsg.scan[0] > 0.0) && (laserMsg.scan[0] < range) &&
+                    //     (laserMsg.scan[1] > 0.0) && (laserMsg.scan[1] < range) &&
+                    //     (laserMsg.scan[2] > 0.0) && (laserMsg.scan[2] < range) &&
+                    //     (laserMsg.scan[3] > 0.0) && (laserMsg.scan[3] < range) &&
+                    //     )
+                    // if( (laserMsg.scan[356] > 0.0) && (laserMsg.scan[356] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[356];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[356] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[357] > 0.0) && (laserMsg.scan[357] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[357];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[357] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[358] > 0.0) && (laserMsg.scan[358] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[358];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[358] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[359] > 0.0) && (laserMsg.scan[359] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[359];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[359] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[0] > 0.0) && (laserMsg.scan[0] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[0];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[0] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[1] > 0.0) && (laserMsg.scan[1] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[1];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[1] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[2] > 0.0) && (laserMsg.scan[2] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[2];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[2] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[3] > 0.0) && (laserMsg.scan[3] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[3];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[3] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+                    // if( (laserMsg.scan[4] > 0.0) && (laserMsg.scan[4] < range))
+                    // {
+                    //     laserToPole = laserMsg.scan[4];
+                    //     distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                    //     std::cout << "laserdata: " << laserMsg.scan[4] << std::endl;
+                    //     poleCounter++;
+
+                    // }
+
+                    int counterForDistanceMeasure = 356;
+
+                    for(int i = 0; i < 9; i++)
                     {
+                        if( (laserMsg.scan[counterForDistanceMeasure] > 0.0) && (laserMsg.scan[counterForDistanceMeasure] < range))
+                        {
+                            laserToPole = laserMsg.scan[counterForDistanceMeasure];
+                            distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
+                            std::cout << "laserdata: " << laserMsg.scan[counterForDistanceMeasure] << std::endl;
 
-                        distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
-                        std::cout << "laserdata: " << laserMsg.scan[0] << std::endl;
-                        poleCounter++;
+                            
+                            poleCounter++;
 
+                        }
+
+                        counterForDistanceMeasure ++;
+                        if (counterForDistanceMeasure == 360)
+                        {
+                            counterForDistanceMeasure = 0;
+                        }
                     }
+                    
+                    std::cout << "----------------" << std::endl;
+
 
 
                     tmp = 0;
@@ -310,8 +425,8 @@ int main()
             goPoses[6].x = goPoses[0].x;
             goPoses[6].y = goPoses[0].y;
             goPoses[6].theta = limitAng( goPoses[0].theta + (180.0 * PI / 180) ) ;
-            std:: cout << "Go7x: " <<goPoses[7].x << std::endl;
-            std:: cout << "Go7y: " <<goPoses[7].y << std::endl;
+            std:: cout << "Go6x: " <<goPoses[6].x << std::endl;
+            std:: cout << "Go6y: " <<goPoses[6].y << std::endl;
 
 
             posePole.x = goPoses[0].x + cos(goPoses[0].theta) * (distanceToPoleMiddle);
@@ -342,13 +457,14 @@ int main()
 
             goPoses[4].x = posePole.x + cos(posePole.theta + PI/2) * (distanceFromPole);
             goPoses[4].y = posePole.y + sin(posePole.theta + PI/2) * (distanceFromPole);
-            goPoses[4].theta = limitAng( posePole.theta + (178.0 * PI / 180) );
+            goPoses[4].theta = limitAng( posePole.theta + (180.0 * PI / 180) );
             std:: cout << "Go4x: " <<goPoses[4].x << std::endl;
             std:: cout << "Go4y: " <<goPoses[4].y << std::endl;
 
             goPoses[5].x = goPoses[1].x;
             goPoses[5].y = goPoses[1].y;
-            goPoses[5].theta = limitAng( goPoses[1].theta + (-135.0 * PI / 180) );
+            // goPoses[5].theta = limitAng( goPoses[1].theta + (-135.0 * PI / 180) );
+            goPoses[5].theta = limitAng( goPoses[1].theta + (-90.0 * PI / 180) );
             std:: cout << "Go5x: " <<goPoses[5].x << std::endl;
             std:: cout << "Go5y: " <<goPoses[5].y << std::endl;
 
@@ -479,7 +595,7 @@ int main()
 
         deltaDistanceWall = distanceLeft - distanceRight;
 
-        if((laserDistanceMiddle + 0.2) > ((distanceLeft + distanceRight) / 2))      // möglich hinzufügen: if right >>> left -> wallfollowing false
+        if((laserDistanceMiddle + 0.1) > ((distanceLeft + distanceRight) / 2))      // möglich hinzufügen: if right >>> left -> wallfollowing false
         {
             wallFollowing = true;
         }
@@ -535,10 +651,10 @@ int main()
                 vt = kp * rho;
                 wt = (k_alpha*alpha) + (k_beta*beta);
 
-                // if(wallFollowing)
-                // {
-                //     wt = wt + k_wall*deltaDistanceWall;
-                // }
+                //  //if(wallFollowing)
+                //  //{
+                //  //    wt = wt + k_wall*deltaDistanceWall;
+                //  //}
 
                 if(vt > VT_MAX)
                 {
@@ -554,10 +670,10 @@ int main()
                     wt = -WT_MAX;
                 }
 
-                if((abs(currentDeltaPose.x) < 0.1) && (abs(currentDeltaPose.y) < 0.1) && (abs(currentDeltaPose.theta) < 0.2)  && goalCount < numGoPoses)
+                if((abs(currentDeltaPose.x) < 0.05) && (abs(currentDeltaPose.y) < 0.05) && (abs(currentDeltaPose.theta) < 0.1)  && goalCount < numGoPoses)
                 {
-                    vt = 0.0;
-                    wt = 0.0;
+                    // vt = 0.0;
+                    // wt = 0.0;
 
                     goalCount++;
                     if(goalCount == numGoPoses)
