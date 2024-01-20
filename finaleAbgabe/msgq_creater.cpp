@@ -8,6 +8,7 @@
 #include <iostream>
 
 
+// specific keys for message queues
 key_t KEY_ODOM          = 810;
 key_t KEY_LASER         = 820;
 key_t KEY_VEL           = 830;
@@ -16,13 +17,15 @@ key_t KEY_ODOM_ACT       = 710;
 key_t KEY_LASER_ACT      = 720;
 key_t KEY_VEL_ACT        = 730;
 
-
+// message queues IDs after creating
 int msgqid_odom, msgqid_laser, msgqid_vel, msgqid_odom_act, msgqid_laser_act, msgqid_vel_act;  
 
+// handler for msgq to kill queues
 void msgqHandler(int sig);
 
 int main() 
 {
+    // creating msgqs
     msgqid_odom = msgget(KEY_ODOM, 0666 | IPC_CREAT);
     if (msgqid_odom == -1) {
       std::cerr << "msgget odom failed\n";
@@ -72,6 +75,7 @@ int main()
 
 void msgqHandler(int sig)
 {
+    // killing msgqs
     std::cout << "Creater of queues kills queues" << std::endl;
     if (msgctl(msgqid_odom, IPC_RMID, 0) == -1) {
         std::cerr << "msgctl(IPC_RMID) failed\n";

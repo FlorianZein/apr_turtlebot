@@ -11,16 +11,19 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-// declaration of msgq
+// keys for msgqs
 key_t KEY_ODOM          = 810;
 key_t KEY_LASER         = 820;
 key_t KEY_VEL           = 830;
 key_t KEY_VEL_ACT        = 730;
 
+// msgq IDs
 int msgqid_odom, msgqid_laser, msgqid_vel, msgqid_vel_act;
 
+// message type
 enum MessageType {PROD_MSG=1, CONS_MSG};
 
+// structs for specific messages
 struct Message_Vel
 {
     long type;
@@ -45,11 +48,13 @@ struct Message_Act
     bool act;
 };
 
+// program handler to exit succesfully
 void msgqHandler(int sig)
 {
     exit(EXIT_SUCCESS);
 }
 
+// struct for 2D Pose
 struct Pose2d
 {
     double x;
@@ -57,60 +62,60 @@ struct Pose2d
     double theta;
 };
 
-
 double PI = 3.141592653589793238463;
 
+// declaration of variables for goal definition and calculations
 const unsigned int numGoPoses = 7;
 Pose2d goPoses[numGoPoses];
 Pose2d posePole;
-
 Pose2d currentPose;
-
 Pose2d currentGoal;
+Pose2d currentDeltaPose;
+bool goPosesDefined = false;
 
+// proportional factor for linear control
 double kp = 0.5;
 double k_alpha = 3.0;
 double k_beta = 1.0;
-double range = 2.0;
 
-Pose2d currentDeltaPose;
+double maxRangeforPole = 2.0;
 
+// declaration of linear control variables
 double rho = 0;
 double alpha = 0;
 double beta = 0;
-
 double vt = 0;
 double wt = 0;
 
-bool drive = true;
+// maximum values for velocities
+const double VT_MAX = 0.07;
+const double WT_MAX = 1.0;
 
+// bools to control driving
+bool drive = true;
+bool driveBool = false;
+
+// declaration of messages
 Message_Odom odomMsg;
 Message_Laser laserMsg;
 Message_Vel velMsg;
 
+// counters
 int goalCount = 0;
 int poleCounter = 0;
 
-
-bool goPosesDefined = false;
-
-// für berechnung der poses
+// variables for calculating poses depending on pole distance
 const int numOfScansForDistanceToPole = 50;
 double distanceToPoleMiddle = 0;
 double poleDiameter = 0.085;
-double distanceFromPole = poleDiameter + 0.30;   // normalabstand von der pole
+double distanceFromPole = poleDiameter + 0.30;   // normal distance to pole
 
-bool driveBool = false;
-
-// variables for laserscan box wall
+// variables for wallfollowing --> NOT IMPLEMENTED
 double distanceLeft = 0, distanceRight = 0, laserDistanceMiddle = 0, deltaDistanceWall = 0;
 double k_wall = 1.33;
 bool wallFollowing = false;
 
-const double VT_MAX = 0.07;
-const double WT_MAX = 1.0;
-
-// limit angles to -180 to 180 degrees
+// function to limit angles from -PI to PI radiant
 double limitAng(double param)
 {
     if(param > PI && param <= PI)
@@ -139,6 +144,7 @@ double limitAng(double param)
 
 int main()
 {
+    // attach/create msgqs
     msgqid_odom = msgget(KEY_ODOM, 0666 | IPC_CREAT);
     if (msgqid_odom == -1) {
       std::cerr << "msgget laser prod failed\n";
@@ -163,9 +169,11 @@ int main()
       exit(EXIT_FAILURE);
     }
 
+    // receiving odom and laser data
     msgrcv(msgqid_odom, &odomMsg, sizeof(double) * 6, PROD_MSG, 0);
     msgrcv(msgqid_laser, &laserMsg, sizeof(double) * 360, PROD_MSG, 0);
 
+    // sending cmd_vel data
     Message_Vel actVelMsg;
 
     actVelMsg.type = PROD_MSG;
@@ -196,6 +204,7 @@ int main()
         //     std::cout << i << std::endl;
         // }
 
+        // calculation basis for converting quaternions to euler angles
         // double yaw_z = atan2( 2.0 * (w*z + x*y), 1.0 - 2.0 *(y*y + z*z));
 
         currentPose.x = odomMsg.pose[0];
@@ -208,22 +217,23 @@ int main()
         // goPoses definition
         if(goPosesDefined == false)
         {
-            // laserscan auswertung für poledistance
+            // laserscan evaluation for pole distance
             for(int i = 0; i < numOfScansForDistanceToPole; i++)
             {
-
                 actVelMsg.type = PROD_MSG;
                 actVelMsg.velocities[0] = 0.0;
                 actVelMsg.velocities[1] = 0.0;
 
-
+                // sending cmd_vel to activate all programs
                 if(msgsnd(msgqid_vel, &actVelMsg, sizeof(float) * 2, 0) != 0)
                 {
                     std::cout << "msgq_odom send failed" << std::endl;
                 };
 
+                // receiving odom and laser data
                 msgrcv(msgqid_odom, &odomMsg, sizeof(double) * 6, PROD_MSG, 0);
                 int tmp = msgrcv(msgqid_laser, &laserMsg, sizeof(double) * 360, PROD_MSG, 0);
+
                 if(tmp > 0)
                 {
                     double laserToPole = 0;
@@ -245,15 +255,15 @@ int main()
 
                     int counterForDistanceMeasure = 356;
 
+                    // searching pole in small field of view and middle the distances
                     for(int i = 0; i < 9; i++)
                     {
-                        if( (laserMsg.scan[counterForDistanceMeasure] > 0.0) && (laserMsg.scan[counterForDistanceMeasure] < range))
+                        if( (laserMsg.scan[counterForDistanceMeasure] > 0.0) && (laserMsg.scan[counterForDistanceMeasure] < maxRangeforPole))
                         {
                             laserToPole = laserMsg.scan[counterForDistanceMeasure];
                             distanceToPoleMiddle = distanceToPoleMiddle + laserToPole + poleDiameter/2;
                             std::cout << "laserdata: " << laserMsg.scan[counterForDistanceMeasure] << std::endl;
 
-                            
                             poleCounter++;
 
                         }
@@ -276,9 +286,9 @@ int main()
             distanceToPoleMiddle = distanceToPoleMiddle / poleCounter;
             std::cout << "Distance to middle of pole: " << distanceToPoleMiddle << std::endl;
 
-            // gettin wall distance
-            distanceLeft = 0;
-            distanceRight = 0;
+            // // getting wall distance
+            // distanceLeft = 0;
+            // distanceRight = 0;
 
             // for(int i = 268; i < 268 + 5; i++)
             // {
@@ -295,7 +305,8 @@ int main()
             // // anfangsposition von y
             // laserDistanceMiddle = (distanceLeft + distanceRight) / 2;
 
-            // real positions new with first theta
+
+            // pose calculation in dependency of first pose
             goPoses[0].x = currentPose.x;
             goPoses[0].y = currentPose.y;
             goPoses[0].theta = currentPose.theta;
@@ -402,6 +413,7 @@ int main()
 
         if(driveBool == true)
         {
+            // calculation of linear control
             currentDeltaPose.x = currentGoal.x - currentPose.x;
             currentDeltaPose.y = currentGoal.y - currentPose.y;
             currentDeltaPose.theta = currentGoal.theta  - currentPose.theta;
@@ -418,6 +430,7 @@ int main()
 
             if(drive == true)
             {
+                // calculation of velocities
                 vt = kp * rho;
                 wt = (k_alpha*alpha) + (k_beta*beta);
 
@@ -426,6 +439,7 @@ int main()
                 //      wt = wt + k_wall*deltaDistanceWall;
                 //  }
 
+                // limitation of velocities
                 if(vt > VT_MAX)
                 {
                     vt = VT_MAX;
@@ -440,6 +454,8 @@ int main()
                     wt = -WT_MAX;
                 }
 
+                // if goal is reached, new goal is selected
+                // if last goal is reached, program will be stopped
                 if((abs(currentDeltaPose.x) < 0.075) && (abs(currentDeltaPose.y) < 0.075) && (abs(currentDeltaPose.theta) < 0.1)  && goalCount < numGoPoses)
                 {
                     std::cout << "Goal " << goalCount << " reached! " << std::endl;
@@ -457,6 +473,7 @@ int main()
             }
             else
             {
+                // sending cmd_vel to stop robot and exiting program
                 vt = 0;
                 wt = 0;
 
@@ -474,6 +491,7 @@ int main()
                 return 0;
             }
 
+            // sending calculated and limited velocities
             velMsg.type = PROD_MSG;
             velMsg.velocities[0] = vt;
             velMsg.velocities[1] = wt;

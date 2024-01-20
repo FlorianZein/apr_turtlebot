@@ -17,11 +17,20 @@
 
 #define RCVBUFSIZE 512   /* Size of receive buffer */
 
+// keys for msgqs
 key_t KEY_VEL = 830;
 key_t KEY_VEL_ACT        = 730;
+
+// program handler to exit succesfully
 void consumerHandler(int sig);
+
+// msgq IDs
 int msgqid_vel, msgqid_vel_act;
+
+// message type
 enum MessageType {PROD_MSG=1, CONS_MSG };
+
+// structs for specific messages
 struct Message_Vel
 {
     long type;
@@ -40,13 +49,12 @@ void DieWithError(char* errorMessage);  /* Error handling function */
 int main(int argc, char *argv[])
 {
     int sock;                        /* Socket descriptor */
-    struct sockaddr_in echoServAddr; /* Echo server address */
-    unsigned short echoServPort = 9999;     /* Echo server port */
+    struct sockaddr_in echoServAddr; /* server address */
+    unsigned short echoServPort = 9999;     /* server port */
     const char *servIP = "192.168.100.55";     /* Server IP address (dotted quad) */
-    // const char *servIP = "172.19.178.59";
-    char echoString[] = "---START---{\"linear\": 0.00, \"angular\": 0.0}___END___";               /* String to send to echo server */
-    char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
-    unsigned int echoStringLen;      /* Length of string to echo */
+    char echoString[] = "---START---{\"linear\": 0.00, \"angular\": 0.0}___END___";      /* String to send to cmd_vel */
+    // char echoBuffer[RCVBUFSIZE];     /* Buffer for echo string */
+    unsigned int echoStringLen;      /* Length of string to send */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
                                     
