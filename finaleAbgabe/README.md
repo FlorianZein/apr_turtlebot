@@ -12,7 +12,7 @@ The control of the robot splits in 5 seperate programms:<br><br>
         This program receives the odometry data from the robot over TCP connection and extracts the data from the received message and further sends this data to the main program over a message queue.<br><br>
     5. botControl.cpp<br>
         This program receives the data from the message queues and and sends linear and angular velocity to the TCP_Commander_cmd_vel_msgq.cpp.<br>
-        Further is this the main calculation program for the path planning of the robot.<br><br>
+        Further is this the main calculation program for the path planning of the robot.<br>
         Program process:<br>
             1. the odometry and laserscan data is received<br>
             2. the distance to the pole is extracted and calculated with the laserscan data<br>
@@ -20,18 +20,19 @@ The control of the robot splits in 5 seperate programms:<br><br>
             4. the robot calculates the linear and angular velocities with linear control and if a goal pose is reached, the next goal is selected<br>
             5. the velocities are sended to the TCP_Commander_cmd_vel_msgq.cpp
 
-The ip address of robot needs to be adjusted in the TCP client files!
+The IP address of the robot needs to be adjusted in the TCP client files!
         
 How to start the control:<br>
-Place the turtlebot in the startpositions --> the pole must be placed straight linear forward to the turtlebot<br><br>
-5 terminals are required<br><br>
+Place the turtlebot in the startpositions --> the pole must be placed straightforward to the turtlebot<br><br>
+5 terminals are required!<br><br>
 In the directory:<br>
     - compile the programms with "make":<br>
         msgq_creater.cpp                --> compiles to -->     msgq_creater<br>
         TCP_Commander_cmd_vel_msgq.cpp  --> compiles to -->     tcp_vel<br>
         TCP_Listener_laser_msgq.cpp     --> compiles to -->     tcp_laser<br>
         TCP_Listener_odom_msgq.cpp      --> compiles to -->     tcp_odom<br>
-        botControl.cpp                  --> compiles to -->     bot_control<br><br>
+        botControl.cpp                  --> compiles to -->     bot_control<br>
+        TCP_Commander_cmd_vel_stop.cpp  --> compiles to -->     tcp_vel_stop<br><br>
     - start in each terminal the needed programs<br>
         1.  ./msgq_creater<br>
         2.  ./bot_control<br>
